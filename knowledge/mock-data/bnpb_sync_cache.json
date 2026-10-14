@@ -1,0 +1,91 @@
+{
+  "status": "success",
+  "data": {
+    "source": "WebGIS BNPB (gis.bnpb.go.id - 2026_karhutla)",
+    "layer": "mv_prov_karhutla_2026",
+    "sync_timestamp": "2026-10-13T23:15:00.000Z",
+    "provinces": [
+      {
+        "provinsi": "Kalimantan Barat",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 120.44,
+        "total_hotspot": 44,
+        "relawan_lapangan": 5281,
+        "kualitas_udara_pm25": "Tidak Sehat",
+        "buktipulih_coverage": {
+          "active_plots": 6,
+          "restored_area_ha": 18.2,
+          "alive_trees": 4850
+        }
+      },
+      {
+        "provinsi": "Kalimantan Tengah",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 335.1,
+        "total_hotspot": 3608,
+        "relawan_lapangan": 1163,
+        "kualitas_udara_pm25": "Baik-Berbahaya",
+        "buktipulih_coverage": {
+          "active_plots": 4,
+          "restored_area_ha": 12.5,
+          "alive_trees": 3200
+        }
+      },
+      {
+        "provinsi": "Kalimantan Selatan",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 54.13,
+        "total_hotspot": 233,
+        "relawan_lapangan": 150,
+        "kualitas_udara_pm25": "Tidak Sehat-Berbahaya",
+        "buktipulih_coverage": {
+          "active_plots": 2,
+          "restored_area_ha": 5.0,
+          "alive_trees": 1400
+        }
+      },
+      {
+        "provinsi": "Sumatera Selatan",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 202.38,
+        "total_hotspot": 574,
+        "relawan_lapangan": 0,
+        "kualitas_udara_pm25": "Sedang-Tidak Sehat",
+        "buktipulih_coverage": {
+          "active_plots": 3,
+          "restored_area_ha": 7.8,
+          "alive_trees": 2100
+        }
+      },
+      {
+        "provinsi": "Jambi",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 47.5,
+        "total_hotspot": 37,
+        "relawan_lapangan": 3407,
+        "kualitas_udara_pm25": "Sedang-Sangat Tidak Sehat",
+        "buktipulih_coverage": {
+          "active_plots": 2,
+          "restored_area_ha": 3.2,
+          "alive_trees": 950
+        }
+      },
+      {
+        "provinsi": "Riau",
+        "tgl_update": "2026-09-26",
+        "today_luas_terbakar_ha": 20.5,
+        "total_hotspot": 8,
+        "relawan_lapangan": 591,
+        "kualitas_udara_pm25": "Baik - Tidak Sehat",
+        "buktipulih_coverage": {
+          "active_plots": 1,
+          "restored_area_ha": 2.05,
+          "alive_trees": 680
+        }
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2026-10-13T23:20:00.000Z"
+  }
+}
