@@ -1,0 +1,80 @@
+{
+  "contrastColors": {
+    "text": "rgb(241, 245, 249)",
+    "background": "rgb(255, 255, 255)",
+    "tiles": [
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      },
+      {
+        "loaded": false,
+        "complete": false
+      }
+    ],
+    "menuRuleCount": 1
+  },
+  "httpErrors": [],
+  "failedRequests": [
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "host": "localhost:5000",
+      "failure": "net::ERR_CONNECTION_REFUSED"
+    }
+  ]
+}

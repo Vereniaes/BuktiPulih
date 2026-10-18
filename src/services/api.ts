@@ -13,23 +13,21 @@ import { mockPlotsData } from "@/data/plotsData";
 import { mockImpactData } from "@/data/impactData";
 import { mockTimelineData } from "@/data/timelineData";
 import { mockBnpbData } from "@/data/bnpbData";
+import type { DataResult, HotspotResult, MapBounds } from "@/types/environment";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 // helper fetch dengan batas waktu dan fallback -----------------------------------
-async function fetchWithFallback<T>(
+async function readWithFallback<T>(
   url: string,
   options: RequestInit = {},
   fallbackData: T
-): Promise<T> {
+): Promise<DataResult<T>> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
     const res = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      signal: AbortSignal.timeout(4000),
       credentials: "include",
       headers: {
         Accept: "application/json",
@@ -37,19 +35,39 @@ async function fetchWithFallback<T>(
       },
     });
 
-    clearTimeout(timeoutId);
-
     if (!res.ok) {
-      console.warn(`[API] Endpoint ${url} merespons ${res.status}, menggunakan data fallback.`);
-      return fallbackData;
+      throw new Error("Data unavailable");
     }
 
     const json = await res.json();
-    return (json.data as T) || fallbackData;
+    if (json.data == null) throw new Error("Data unavailable");
+    return { data: json.data as T, origin: "service", fetched_at: new Date().toISOString(), failed: false };
   } catch {
     // jika backend belum aktif atau network terputus, gunakan data fallback
-    return fallbackData;
+    return { data: fallbackData, origin: "sample", fetched_at: null, failed: true };
   }
+}
+
+async function fetchWithFallback<T>(url: string, options: RequestInit, fallbackData: T): Promise<T> {
+  return (await readWithFallback(url, options, fallbackData)).data;
+}
+
+export async function getHomepageDataApi() {
+  const [plots, bnpb] = await Promise.all([
+    readWithFallback(`${API_BASE_URL}/plots`, {}, mockPlotsData),
+    readWithFallback(`${API_BASE_URL}/external/bnpb-karhutla`, {}, mockBnpbData),
+  ]);
+  return { plots, bnpb };
+}
+
+export async function getHotspotsApi(bounds: MapBounds, signal: AbortSignal): Promise<HotspotResult> {
+  const response = await fetch(`${API_BASE_URL}/external/hotspots?${new URLSearchParams({ bbox: bounds.join(",") })}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
+  });
+  if (!response.ok) throw new Error("Data titik panas belum tersedia.");
+  const json = await response.json();
+  if (!Array.isArray(json.data?.observations)) throw new Error("Data titik panas belum tersedia.");
+  return json.data;
 }
 // end of helper fetch -------------------------------------------------------------
 

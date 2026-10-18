@@ -1,0 +1,381 @@
+[
+  {
+    "test": "mobile-repeat",
+    "tab": "fire",
+    "width": 481,
+    "documentWidth": 481,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 481,
+      "h": 2166,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 370,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": {
+      "x": 42,
+      "y": 1089,
+      "w": 397,
+      "h": 518,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPost": null,
+    "firstPhoto": null,
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 390
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "mobile-repeat",
+    "tab": "recovery",
+    "width": 1200,
+    "documentWidth": 1200,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 1200,
+      "h": 3342,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 370,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": {
+      "x": 21,
+      "y": 895,
+      "w": 1158,
+      "h": 480,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPost": null,
+    "firstPhoto": {
+      "x": 46,
+      "y": 1981,
+      "w": 173,
+      "h": 173,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "clip"
+    },
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 390
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "mobile-repeat",
+    "tab": "forum",
+    "width": 408,
+    "documentWidth": 408,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 408,
+      "h": 5153,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 370,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": null,
+    "firstPost": {
+      "x": 20,
+      "y": 794,
+      "w": 368,
+      "h": 657,
+      "display": "inline-block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPhoto": null,
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 390
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "mobile-repeat",
+    "tab": "fire",
+    "width": 481,
+    "documentWidth": 481,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 481,
+      "h": 2166,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 363,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": {
+      "x": 42,
+      "y": 1089,
+      "w": 397,
+      "h": 518,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPost": null,
+    "firstPhoto": null,
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 360
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "mobile-repeat",
+    "tab": "recovery",
+    "width": 1200,
+    "documentWidth": 1200,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 1200,
+      "h": 3342,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 363,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": {
+      "x": 21,
+      "y": 895,
+      "w": 1158,
+      "h": 480,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPost": null,
+    "firstPhoto": {
+      "x": 46,
+      "y": 1981,
+      "w": 173,
+      "h": 173,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "clip"
+    },
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 360
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "mobile-repeat",
+    "tab": "forum",
+    "width": 408,
+    "documentWidth": 408,
+    "main": {
+      "x": 0,
+      "y": 304,
+      "w": 408,
+      "h": 5153,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 363,
+      "y": 32,
+      "w": 0,
+      "h": 0,
+      "display": "flex",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "map": null,
+    "firstPost": {
+      "x": 20,
+      "y": 794,
+      "w": 368,
+      "h": 657,
+      "display": "inline-block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPhoto": null,
+    "h1Count": 0,
+    "configuredViewport": {
+      "height": 844,
+      "width": 360
+    },
+    "measuredWidthMeaning": "window.innerWidth - layout expanded by overflow in mobile emulation"
+  },
+  {
+    "test": "plot-to-evidence-and-refresh",
+    "before": {
+      "url": "http://localhost:3001/?tab=recovery&region=riau",
+      "summary": "Riau (Pelalawan / Kampar)",
+      "plot": "Gambut Kampar Lestari Pelalawan"
+    },
+    "after": {
+      "url": "http://localhost:3001/?tab=recovery&region=riau",
+      "heading": "Forum Pulih: Catatan Partisipasi Lapangan",
+      "selectedRegion": "riau",
+      "postCount": 1
+    },
+    "reloaded": {
+      "url": "http://localhost:3001/?tab=recovery&region=riau",
+      "recoveryVisible": true
+    }
+  },
+  {
+    "test": "detail-desktop",
+    "url": "http://localhost:3001/forum/post-kb-011",
+    "width": 1440,
+    "documentWidth": 1440,
+    "main": {
+      "x": 120,
+      "y": 0,
+      "w": 1200,
+      "h": 2298,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "visible"
+    },
+    "menu": null,
+    "map": null,
+    "firstPost": null,
+    "firstPhoto": null,
+    "h1Count": 0
+  },
+  {
+    "test": "detail-mobile",
+    "width": 390,
+    "documentWidth": 390,
+    "main": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2988,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "visible"
+    },
+    "menu": null,
+    "map": null,
+    "firstPost": null,
+    "firstPhoto": null,
+    "h1Count": 0
+  },
+  {
+    "test": "dark-forum",
+    "width": 1440,
+    "documentWidth": 1440,
+    "main": {
+      "x": 120,
+      "y": 220,
+      "w": 1200,
+      "h": 2086,
+      "display": "block",
+      "visibility": "visible",
+      "minWidth": "auto",
+      "overflowX": "visible"
+    },
+    "menu": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "display": "none",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "visible"
+    },
+    "map": null,
+    "firstPost": {
+      "x": 140,
+      "y": 512,
+      "w": 275,
+      "h": 606,
+      "display": "inline-block",
+      "visibility": "visible",
+      "minWidth": "0px",
+      "overflowX": "hidden"
+    },
+    "firstPhoto": null,
+    "h1Count": 0
+  }
+]

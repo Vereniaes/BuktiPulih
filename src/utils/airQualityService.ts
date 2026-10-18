@@ -5,6 +5,12 @@
 //      -> penyedia rekomendasi kesehatan dan mitigasi kabut asap lapangan
 //      -> penampung cache memori berbasis koordinat
 
+import { fetchHourlyForecast } from "./hourlyForecast";
+
+export const fetchAirQualityForecast = (lat: number, lon: number) =>
+  fetchHourlyForecast("https://air-quality-api.open-meteo.com/v1/air-quality", lat, lon,
+    ["pm2_5"], { domains: "cams_global" });
+
 export type IspuCategory = "BAIK" | "SEDANG" | "TIDAK SEHAT" | "SANGAT TIDAK SEHAT" | "BERBAHAYA";
 
 export interface LiveAirQualityData {

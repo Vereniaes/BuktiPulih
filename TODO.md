@@ -1,5 +1,47 @@
 # BuktiPulih — Roadmap & Task Tracker
 
+## 26. Homepage referensi Emisi - 18–19 Oktober 2026
+
+- [x] Keputusan /grillme dan rencana implementasi disetujui.
+- [x] Riset Emisi, NASA FIRMS, Open-Meteo, kode, dan dokumentasi lokal.
+- [x] Adaptor hotspot, parser CSV, cache, dan pengujian kegagalan sumber.
+- [x] Prakiraan lima hari dengan nilai kosong dan kegagalan terpisah.
+- [x] Homepage, peta, pembesaran, bukti, dan navigasi URL.
+- [x] TypeScript, build, pengujian data, dan browser kedua tema.
+- [ ] Uji live NASA setelah FIRMS_MAP_KEY valid tersedia.
+
+Verifikasi: 9 pengujian adaptor dan 6 pengujian prakiraan lulus; browser lulus untuk homepage, navigasi, dan kontribusi terisolasi. Overflow ponsel pada tab Karhutla lama masih tercatat sebagai masalah sebelumnya, di luar susunan homepage baru.
+
+Catatan: [knowledge Emisi](knowledge/reverse-engineering-emisi-homepage.md). Tanpa commit, push, deployment, atau migrasi database.
+
+## 24. Audit UI/UX dan BRD ringkasan wilayah - 17 Oktober 2026
+
+- [x] Konfirmasi tujuan melalui `/grillme`: menemukan informasi utama dengan cepat.
+- [x] Konfirmasi arah: ringkasan per wilayah berisi karhutla, pemulihan, dan bukti terbaru.
+- [x] Inventarisasi panduan, skill lokal, catatan, serta kode alur utama.
+- [x] Periksa tiga tab pada desktop 1440 px dan ponsel 390 px; simpan tangkapan layar.
+- [x] Ulangi temuan kritis dan periksa perpindahan wilayah, detail, serta navigasi ponsel.
+- [x] Simpan temuan dan sumber eksternal di `knowledge/ui-ux-audit-2026-10-17.md`.
+- [x] Susun BRD ringkas di `planning/brd-ringkasan-wilayah.md`, termasuk tiga opsi, batas lingkup, dampak, dan ukuran keberhasilan.
+- [x] Periksa dokumen, 12 tangkapan layar, 3 berkas hasil pengujian, tautan lokal, dan perubahan berkas.
+- [x] Konfirmasi langkah berikutnya melalui `/grillme` setelah BRD tersedia: wireframe ponsel dan desktop dipilih.
+
+Lingkup sesi: audit dan dokumen. Implementasi UI belum dilakukan. Berkas `frontend-req` dan gambar mockup lama belum ditemukan pada inventaris proyek. Catatan audit baru menjadi bukti kondisi saat ini; status selesai pada catatan lama bukan hasil pengujian ulang.
+
+Hasil: arah ringkasan wilayah dipilih; masalah navigasi ponsel, overflow, konteks URL/petak, dan label asal data dicatat. Pengujian desktop, emulasi ponsel, detail, serta tema gelap dilakukan pada server development. Belum ada uji pengguna atau performa produksi. Tidak ada perubahan kode aplikasi, commit, atau push.
+
+## 25. Wireframe ringkasan wilayah - 17 Oktober 2026
+
+- [x] Konfirmasi lingkup berdasarkan pilihan `/grillme`: wireframe, sebelum implementasi UI.
+- [x] Tinjau BRD, audit visual, panduan lokal, token, dan taksonomi wilayah.
+- [x] Buat tampilan semua wilayah, satu wilayah, dan keadaan tanpa data untuk desktop serta ponsel.
+- [x] Render SVG menjadi PNG dan periksa keterbacaan, urutan informasi, serta area sentuh.
+- [x] Dokumentasikan alur, data contoh, pemetaan kebutuhan BRD, dan referensi riset.
+- [x] Periksa hasil: enam frame, satu papan pratinjau, dan tautan dokumen; teks tidak keluar atau bertumpuk, area kontrol minimal 44 px.
+- [ ] Pilih tindak lanjut melalui `/grillme` setelah meninjau wireframe.
+
+Hasil tersimpan di `planning/wireframes/ringkasan-wilayah/README.md` dengan PNG, SVG, dan `visual-checks.json`. Referensi ada di `knowledge/wireframe-ringkasan-wilayah.md`. Wireframe bersifat statis dengan data contoh; belum ada pengukuran pengguna atau implementasi aplikasi. Tidak ada commit atau push.
+
 ## 1. Status Tracker
 - [x] **Analisis UI Design System Website Referensi** (`bijakmemantau.id`)
   - [x] Inspeksi token, layout, tipografi, dan palet warna.

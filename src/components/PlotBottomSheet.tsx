@@ -12,12 +12,14 @@ interface PlotBottomSheetProps {
   plot: PlotFeature | null;
   onClose: () => void;
   onFilterTimelineByPlot: (plotCode: string) => void;
+  actionLabel?: string;
 }
 
 export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
   plot,
   onClose,
   onFilterTimelineByPlot,
+  actionLabel = "lihat catatan petak ini",
 }) => {
   if (!plot) return null;
 
@@ -98,7 +100,7 @@ export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
           onClick={() => onFilterTimelineByPlot(properties.plot_code)}
           className="btn-filter-timeline"
         >
-          lihat catatan petak ini
+          {actionLabel}
         </button>
       </div>
       {/* end of footer ---------------------------------------------------------- */}

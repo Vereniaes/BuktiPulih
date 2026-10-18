@@ -4,6 +4,32 @@
 
 @import "leaflet/dist/leaflet.css";
 
+/* Shared navigation - compact destinations for the homepage and existing tabs. */
+.portal-shell > main.container { width: 100%; min-width: 0; }
+.portal-home .global-footer, .portal-home .global-footer p, .portal-home .global-footer button,
+.portal-home .footer-inner > div > div, .portal-home .footer-bottom, .portal-home .footer-bottom div { color: var(--ink) !important; }
+.portal-header .portal-header-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; min-height: 72px; width: 100%; }
+.portal-header button { min-height: 44px; color: var(--ink); font-size: 13px; padding: 8px 10px; }
+.portal-header .logo-brand { padding-left: 0; }
+.portal-header .portal-tabs { display: flex; gap: 4px; }
+.portal-header .portal-tabs button[aria-current="page"] { color: var(--stamp); box-shadow: inset 0 -2px var(--stamp); font-weight: 800; }
+.portal-header .portal-actions { display: flex; align-items: center; gap: 4px; }
+.portal-header .btn-report-primary { color: white; padding-inline: 16px; }
+.portal-header button:focus-visible { outline: 3px solid var(--stamp); outline-offset: 2px; }
+.portal-header .portal-sync { flex-basis: 100%; text-align: right; }
+@media (max-width: 900px) {
+  .portal-header .portal-header-inner { gap: 4px 8px; padding-top: 8px; }
+  .portal-header .portal-tabs { order: 3; width: 100%; justify-content: space-between; }
+  .portal-header .portal-actions button { padding-inline: 8px; font-size: 12px; }
+  .portal-header .logo-text { font-size: 20px; }
+}
+@media (max-width: 380px) {
+  .portal-header .portal-header-inner { padding-inline: 12px; }
+  .portal-header .logo-text { font-size: 18px; }
+  .portal-header .portal-actions { gap: 0; }
+  .portal-header .portal-actions button { font-size: 11px; padding-inline: 5px; }
+}
+
 :root {
   /* color tokens - brand & ink */
   --brand-navy-950: #040714;

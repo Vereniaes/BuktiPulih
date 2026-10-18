@@ -5,6 +5,11 @@
 //      -> penampung cache memori hemat kuota dan pencegah latensi
 
 import { WindDirection } from "@/types";
+import { fetchHourlyForecast } from "./hourlyForecast";
+
+export const fetchWeatherForecast = (lat: number, lon: number) =>
+  fetchHourlyForecast("https://api.open-meteo.com/v1/forecast", lat, lon,
+    ["wind_speed_10m", "wind_direction_10m", "precipitation"], { wind_speed_unit: "kmh" });
 
 export interface LiveWeatherData {
   wind_speed_kmh: number;
