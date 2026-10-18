@@ -71,3 +71,10 @@ Wireframe dan audit 17 Oktober di planning/ dan knowledge/ menjadi dasar identit
 - Node 20.18 bawaan lingkungan dapat membangun backend tetapi startup aplikasi lama terhambat ketergantungan ESM `sanitize-html`. Uji HTTP backend dilakukan dengan Node 24.22.0 yang tersedia, tanpa mengubah dependensi lama atau menyalakan pekerjaan terjadwal.
 - Build Next.js menampilkan peringatan lockfile di luar repositori. Preview melalui skrip start lama juga memperingatkan konfigurasi standalone. Kedua peringatan tidak menggagalkan build maupun rangkaian browser.
 - Tidak ada commit, push, deployment, atau perubahan rahasia. Perubahan lokal yang sudah ada dipertahankan.
+
+## Perbaikan ikon tema - 19 Oktober 2026
+
+- Reproduksi: tombol Gelap tampil tanpa SVG. Penyebabnya adalah ikon tidak disertakan saat HeaderNav disederhanakan, bukan kegagalan warna atau pemuatan aset.
+- Pulihkan ikon bulan/matahari dari header sebelumnya dengan satu SVG dan kelas `theme-toggle-content` yang sudah ada. Handler tema, label aksesibel, dan CSS tetap sama.
+- Ikon dekoratif memakai `aria-hidden` dan `focusable="false"`, sesuai [pola SVG W3C](https://design-system.w3.org/styles/svg-icons.html).
+- TypeScript lulus. Browser memverifikasi kedua ikon, pergantian tema, penyimpanan setelah refresh, target sentuh 44 px, serta tidak ada overflow homepage pada 320/360/390/768/1440 px. Tangkapan layar tersedia sebagai `emisi-homepage-qa/theme-icon-*`.

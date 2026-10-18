@@ -1,5 +1,11 @@
 # BuktiPulih — Roadmap & Task Tracker
 
+## 27. Pulihkan ikon tombol tema - 19 Oktober 2026
+
+- [x] Reproduksi ikon hilang dan periksa header sebelum/sesudah perubahan.
+- [x] Pulihkan SVG bulan/matahari dengan gaya yang sudah tersedia.
+- [x] Periksa perpindahan tema, refresh, dan tampilan 320/360/390/768/1440 px; TypeScript lulus.
+
 ## 26. Homepage referensi Emisi - 18–19 Oktober 2026
 
 - [x] Keputusan /grillme dan rencana implementasi disetujui.
