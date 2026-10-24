@@ -531,6 +531,16 @@ export default function PortalClient() {
             </div>
           </div>
         </div>
+
+        {/* pita ukiran garis lanskap pemulihan gaya calsum */}
+        <div className="footer-engraving-banner">
+          <img
+            src="/footer-woodcut-engraving.jpg"
+            alt="Ilustrasi ukiran garis pemulihan ekosistem gambut dan reboisasi pohon pasca-karhutla"
+            className="footer-engraving-img"
+            loading="lazy"
+          />
+        </div>
       </footer>
     </div>
   );

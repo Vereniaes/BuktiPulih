@@ -102,6 +102,12 @@ export interface BnpbProvinceItem {
     restored_area_ha: number;
     alive_trees: number;
   };
+  weather_summary?: {
+    temperature_c: number;
+    relative_humidity: number;
+    condition_label: string;
+    zone_centroid: string;
+  };
 }
 
 export interface BnpbSyncData {

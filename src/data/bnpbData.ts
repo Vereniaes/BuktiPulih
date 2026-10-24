@@ -21,6 +21,12 @@ export const mockBnpbData: BnpbSyncData = {
         restored_area_ha: 18.2,
         alive_trees: 4850,
       },
+      weather_summary: {
+        temperature_c: 33,
+        relative_humidity: 58,
+        condition_label: "Panas Kering",
+        zone_centroid: "Kubu Raya",
+      },
     },
     {
       provinsi: "Kalimantan Tengah",
@@ -33,6 +39,12 @@ export const mockBnpbData: BnpbSyncData = {
         active_plots: 4,
         restored_area_ha: 12.5,
         alive_trees: 3200,
+      },
+      weather_summary: {
+        temperature_c: 35,
+        relative_humidity: 42,
+        condition_label: "Kering Ekstrem",
+        zone_centroid: "Pulang Pisau",
       },
     },
     {
@@ -47,6 +59,12 @@ export const mockBnpbData: BnpbSyncData = {
         restored_area_ha: 5.0,
         alive_trees: 1400,
       },
+      weather_summary: {
+        temperature_c: 34,
+        relative_humidity: 49,
+        condition_label: "Kering Kritis",
+        zone_centroid: "Banjarbaru",
+      },
     },
     {
       provinsi: "Sumatera Selatan",
@@ -59,6 +77,12 @@ export const mockBnpbData: BnpbSyncData = {
         active_plots: 3,
         restored_area_ha: 7.8,
         alive_trees: 2100,
+      },
+      weather_summary: {
+        temperature_c: 34,
+        relative_humidity: 51,
+        condition_label: "Kering Kritis",
+        zone_centroid: "Ogan Komering Ilir",
       },
     },
     {
@@ -73,6 +97,12 @@ export const mockBnpbData: BnpbSyncData = {
         restored_area_ha: 3.2,
         alive_trees: 950,
       },
+      weather_summary: {
+        temperature_c: 33,
+        relative_humidity: 62,
+        condition_label: "Panas Lembap",
+        zone_centroid: "Muaro Jambi",
+      },
     },
     {
       provinsi: "Riau",
@@ -85,6 +115,12 @@ export const mockBnpbData: BnpbSyncData = {
         active_plots: 1,
         restored_area_ha: 2.05,
         alive_trees: 680,
+      },
+      weather_summary: {
+        temperature_c: 32,
+        relative_humidity: 68,
+        condition_label: "Lembap Waspada",
+        zone_centroid: "Pelalawan",
       },
     },
   ],

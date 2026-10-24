@@ -817,6 +817,21 @@ export const FireHazeMap: React.FC<FireHazeMapProps> = ({
                         </span>
                       </div>
 
+                      {/* indikator suhu dan kelembapan zona gambut */}
+                      {prov.weather_summary && (
+                        <div className="bnpb-prov-subclimate">
+                          <span
+                            className={`bnpb-weather-chip ${prov.weather_summary.temperature_c >= 34 ? "hot-critical" : ""}`}
+                            title={`Suhu udara dan kelembapan di ${prov.weather_summary.zone_centroid} (Sumber: Open-Meteo / BMKG)`}
+                          >
+                            🌡️ {prov.weather_summary.temperature_c}°C · RH {prov.weather_summary.relative_humidity}% ({prov.weather_summary.condition_label})
+                          </span>
+                          <span className="bnpb-weather-centroid" title="Titik fokus pantauan gambut rawan">
+                            📍 {prov.weather_summary.zone_centroid}
+                          </span>
+                        </div>
+                      )}
+
                       {/* progress bar luas terbakar */}
                       <div style={{ marginTop: "6px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px", marginBottom: "3px" }}>

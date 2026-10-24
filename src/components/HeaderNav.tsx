@@ -28,7 +28,7 @@ export function HeaderNav(props: HeaderNavProps) {
           aria-current={props.activeTab === tab.key ? "page" : undefined}>{tab.label}</button>)}
       </nav>
       <div className="portal-actions">
-        <button onClick={props.onToggleTheme} aria-label={props.theme === "dark" ? "Gunakan tema terang" : "Gunakan tema gelap"}>
+        <button className="btn-theme-toggle" onClick={props.onToggleTheme} aria-label={props.theme === "dark" ? "Gunakan tema terang" : "Gunakan tema gelap"}>
           <span className="theme-toggle-content">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               {props.theme === "dark" ? <>

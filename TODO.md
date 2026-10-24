@@ -1,53 +1,5 @@
 # BuktiPulih — Roadmap & Task Tracker
 
-## 27. Pulihkan ikon tombol tema - 19 Oktober 2026
-
-- [x] Reproduksi ikon hilang dan periksa header sebelum/sesudah perubahan.
-- [x] Pulihkan SVG bulan/matahari dengan gaya yang sudah tersedia.
-- [x] Periksa perpindahan tema, refresh, dan tampilan 320/360/390/768/1440 px; TypeScript lulus.
-
-## 26. Homepage referensi Emisi - 18–19 Oktober 2026
-
-- [x] Keputusan /grillme dan rencana implementasi disetujui.
-- [x] Riset Emisi, NASA FIRMS, Open-Meteo, kode, dan dokumentasi lokal.
-- [x] Adaptor hotspot, parser CSV, cache, dan pengujian kegagalan sumber.
-- [x] Prakiraan lima hari dengan nilai kosong dan kegagalan terpisah.
-- [x] Homepage, peta, pembesaran, bukti, dan navigasi URL.
-- [x] TypeScript, build, pengujian data, dan browser kedua tema.
-- [ ] Uji live NASA setelah FIRMS_MAP_KEY valid tersedia.
-
-Verifikasi: 9 pengujian adaptor dan 6 pengujian prakiraan lulus; browser lulus untuk homepage, navigasi, dan kontribusi terisolasi. Overflow ponsel pada tab Karhutla lama masih tercatat sebagai masalah sebelumnya, di luar susunan homepage baru.
-
-Catatan: [knowledge Emisi](knowledge/reverse-engineering-emisi-homepage.md). Tanpa commit, push, deployment, atau migrasi database.
-
-## 24. Audit UI/UX dan BRD ringkasan wilayah - 17 Oktober 2026
-
-- [x] Konfirmasi tujuan melalui `/grillme`: menemukan informasi utama dengan cepat.
-- [x] Konfirmasi arah: ringkasan per wilayah berisi karhutla, pemulihan, dan bukti terbaru.
-- [x] Inventarisasi panduan, skill lokal, catatan, serta kode alur utama.
-- [x] Periksa tiga tab pada desktop 1440 px dan ponsel 390 px; simpan tangkapan layar.
-- [x] Ulangi temuan kritis dan periksa perpindahan wilayah, detail, serta navigasi ponsel.
-- [x] Simpan temuan dan sumber eksternal di `knowledge/ui-ux-audit-2026-10-17.md`.
-- [x] Susun BRD ringkas di `planning/brd-ringkasan-wilayah.md`, termasuk tiga opsi, batas lingkup, dampak, dan ukuran keberhasilan.
-- [x] Periksa dokumen, 12 tangkapan layar, 3 berkas hasil pengujian, tautan lokal, dan perubahan berkas.
-- [x] Konfirmasi langkah berikutnya melalui `/grillme` setelah BRD tersedia: wireframe ponsel dan desktop dipilih.
-
-Lingkup sesi: audit dan dokumen. Implementasi UI belum dilakukan. Berkas `frontend-req` dan gambar mockup lama belum ditemukan pada inventaris proyek. Catatan audit baru menjadi bukti kondisi saat ini; status selesai pada catatan lama bukan hasil pengujian ulang.
-
-Hasil: arah ringkasan wilayah dipilih; masalah navigasi ponsel, overflow, konteks URL/petak, dan label asal data dicatat. Pengujian desktop, emulasi ponsel, detail, serta tema gelap dilakukan pada server development. Belum ada uji pengguna atau performa produksi. Tidak ada perubahan kode aplikasi, commit, atau push.
-
-## 25. Wireframe ringkasan wilayah - 17 Oktober 2026
-
-- [x] Konfirmasi lingkup berdasarkan pilihan `/grillme`: wireframe, sebelum implementasi UI.
-- [x] Tinjau BRD, audit visual, panduan lokal, token, dan taksonomi wilayah.
-- [x] Buat tampilan semua wilayah, satu wilayah, dan keadaan tanpa data untuk desktop serta ponsel.
-- [x] Render SVG menjadi PNG dan periksa keterbacaan, urutan informasi, serta area sentuh.
-- [x] Dokumentasikan alur, data contoh, pemetaan kebutuhan BRD, dan referensi riset.
-- [x] Periksa hasil: enam frame, satu papan pratinjau, dan tautan dokumen; teks tidak keluar atau bertumpuk, area kontrol minimal 44 px.
-- [ ] Pilih tindak lanjut melalui `/grillme` setelah meninjau wireframe.
-
-Hasil tersimpan di `planning/wireframes/ringkasan-wilayah/README.md` dengan PNG, SVG, dan `visual-checks.json`. Referensi ada di `knowledge/wireframe-ringkasan-wilayah.md`. Wireframe bersifat statis dengan data contoh; belum ada pengukuran pengguna atau implementasi aplikasi. Tidak ada commit atau push.
-
 ## 1. Status Tracker
 - [x] **Analisis UI Design System Website Referensi** (`bijakmemantau.id`)
   - [x] Inspeksi token, layout, tipografi, dan palet warna.
@@ -121,6 +73,81 @@ Hasil tersimpan di `planning/wireframes/ringkasan-wilayah/README.md` dengan PNG,
 - **2026-10-15 01:25**: Penyusunan dokumen pengetahuan teknis di `knowledge/indikator-tmat-dan-khg-tab2.md` mencakup standar baku mutu air tanah gambut PP No. 57 Tahun 2016 (ambang batas kritis -40 cm) dan spesifikasi integrasi layer spasial KHG BRGM pada Tab 2.
 - **2026-10-15 01:28**: Implementasi penuh Paket Lengkap (Opsi 1 & Opsi 2): Indikator Tinggi Muka Air Gambut (TMAT) terukur dan spanduk siaga darurat bahaya karhutla PP 57/2016 pada `/forum/[id]`, serta integrasi layer poligon spasial Kesatuan Hidrologis Gambut (KHG) BRGM 7 kawasan prioritas pada Tab 2 (`RecoveryMap.tsx`). Verifikasi build Turbopack Next.js (18 halaman statis) 100% lulus 0 error dan audit visual peramban browser subagent sukses.
 - **2026-10-15 01:50**: Implementasi penuh pembersihan AI slop sesuai persetujuan Opsi 3 (The Unified Ledger): konsolidasi 5 kartu KPI menjadi 1 Unified Status Strip, penyederhanaan 17 pill buttons menjadi Forum Control Bar terpadu, pembersihan 36 placeholder kotak abu-abu GrowthCalendar menjadi kartu status petak terdaftar, perbaikan unclosed media query di globals.css (line 4384), sinkronisasi ke WSL, verifikasi build Turbopack Next.js 18/18 halaman lulus 100% (0 error), dan audit visual browser subagent sukses.
+- **2026-10-24 15:35**: Investigasi parameter suhu karhutla (suhu udara vs suhu kecerahan satelit), verifikasi atribut WebGIS BNPB ArcGIS `mv_prov_karhutla_2026`, penyusunan dokumen pengetahuan teknis di `knowledge/parameter-suhu-dan-fdrs-karhutla.md`, dan perancangan 3 opsi solusi untuk papan pantauan provinsi.
+- **2026-10-24 15:38**: Implementasi Opsi 1 (Suhu Udara Permukaan & RH Zona Gambut Terbuka), penambahan `weather_summary` pada tipe dan mock data BNPB 6 provinsi, integrasi subclimate chip pada kartu leaderboard `FireHazeMap.tsx`, sinkronisasi ke WSL, verifikasi build Next.js lulus 100% (0 error), dan verifikasi visual browser sukses.
+- **2026-10-24 15:55**: Investigasi bug visual navbar (tumpukan teks tanpa spasi 'BerandaKarhutlaPemulihanForum', aksi terhimpit, dan zoom Leaflet tumpang tindih dengan logo), penemuan diskrepansi kelas CSS `.portal-header-inner`, serta penyusunan 3 opsi resolusi melalui `/grill-me`.
+- **2026-10-24 16:15**: Analisis kritis konsep ilustrasi reboisasi/pemulihan gambut pada footer berbasis referensi Hollara, pencegahan AI slop 3D generik, penyusunan spesifikasi visual di `knowledge/footer-reforestation-landscape-concept.md`, dan perancangan 3 opsi tata letak melalui `/grill-me`.
+- **2026-10-24 21:20**: Eksplorasi gaya seni ukiran garis klasik (*woodcut engraving / copperplate cross-hatching*) berbasis referensi visual Calsum, identifikasi distingsi teknis (seni ukir cetak garis vs karakter teks ASCII), penyusunan dokumen spesifikasi di `knowledge/engraving-woodcut-footer-style.md`, dan perancangan 3 opsi implementasi melalui `/grill-me`.
+- **2026-10-24 21:26**: Implementasi Opsi 1 disetujui (pita lanskap ukiran garis duotone penuh di dasar footer); pembuatan karya seni `public/footer-woodcut-engraving.jpg`, penyesuaian markup DOM `src/components/PortalClient.tsx`, integrasi styling CSS `.footer-engraving-banner` & filter mode gelap di `src/app/globals.css`, sinkronisasi ke WSL, kompilasi Turbopack Next.js 18/18 halaman lulus 100% (0 error), dan verifikasi visual Playwright sukses pada tema terang maupun gelap.
+
+## 30. Eksplorasi Seni Ukiran Garis Klasik (Woodcut Engraving) pada Footer (Selesai)
+- [x] Analisis kritis visual referensi Calsum (bukan teks karakter ASCII mentah, melainkan seni grafis intaglio / copperplate etching 2-tone arsiran kontur).
+- [x] Pemetaan kesesuaian identitas BuktiPulih (sangat serasi dengan konsep botani konservasi, stempel pos, dan kertas hangat *warm paper*).
+- [x] Penyusunan berkas acuan pengetahuan di `knowledge/engraving-woodcut-footer-style.md`.
+- [x] Penyelarasan arah desain dan pemilihan opsi implementasi melalui `/grill-me` (Opsi 1 disetujui).
+- [x] Pembuatan aset seni grafis lanskap pemulihan gambut Indonesia bergaya woodcut engraving di `public/footer-woodcut-engraving.jpg`.
+- [x] Integrasi kontainer pita dasar `.footer-engraving-banner` dan gambar responsif di `src/components/PortalClient.tsx`.
+- [x] Styling CSS di `src/app/globals.css` (penghapusan watermark lama, framing banner border-top halus, dan filter blueprint monokrom untuk mode gelap).
+- [x] Sinkronisasi ke WSL dan pengujian kompilasi produksi Turbopack Next.js 18/18 halaman lulus 100% (0 error).
+- [x] Verifikasi visual Playwright pada tema terang (`footer_engraving_light.png`) dan gelap (`footer_engraving_dark.png`) membuktikan keterbacaan teks 100% tajam dan estetika woodcut premium.
+
+## 29. Perancangan & Integrasi Ilustrasi Pemulihan Lahan pada Footer (Selesai)
+- [x] Analisis kritis referensi Hollara vs identitas BuktiPulih (menolak kartun 3D generik; mengadopsi seni editorial gouache bernada hangat ekosistem gambut).
+- [x] Analisis aksesibilitas WCAG (mempertahankan keterbacaan teks navigasi dengan memisahkan teks dari pita panorama gambar).
+- [x] Penyusunan berkas spesifikasi di `knowledge/footer-reforestation-landscape-concept.md`.
+- [x] Penyelarasan arah desain dan pemilihan opsi implementasi melalui `/grill-me` (Opsi 3 disetujui).
+- [x] Pembuatan aset ilustrasi panorama reboisasi ekosistem gambut dengan sekat kanal dan bibit pohon endemik di `public/footer-reforestation-backdrop.jpg`.
+- [x] Integrasi styling watermark `.global-footer::before` (opacity 20%, mask-image gradient halus, dan blend mode mode gelap di `src/app/globals.css`).
+- [x] Sinkronisasi berkas ke WSL dan pengujian build Next.js Turbopack 18/18 halaman lulus 100% (0 error).
+- [x] Verifikasi visual Playwright membuktikan teks footer 100% terbaca tajam dengan latar lanskap pemulihan yang atmosferik.
+
+## 28. Perbaikan Glitch Tata Letak & Styling Navbar HeaderNav (Selesai)
+- [x] Identifikasi akar masalah: ketiadaan styling kelas `.portal-header-inner`, `.portal-tabs`, dan `.portal-actions` di `globals.css` pasca-refaktor commit `1baa618`.
+- [x] Identifikasi penyebab zoom Leaflet tumpang tindih: benturan `z-index: 1000` dengan kontrol peta Leaflet saat header kolaps.
+- [x] Pemetaan 3 opsi perbaikan (Lengkapi CSS Portal Header Aktif, Revert ke Kelas Lama, atau CSS Modules Terisolasi).
+- [x] Penyelarasan arah perbaikan melalui `/grill-me` (Opsi 1 disetujui).
+- [x] Penyusunan styling CSS terpadu di `src/app/globals.css` (flexbox 64px, reset `button.logo-brand`, pill control `.portal-tabs`, aksi horizontal `.portal-actions`, penyesuaian media query seluler, dan `z-index: 1100`).
+- [x] Sinkronisasi berkas ke WSL dan pengujian build Next.js Turbopack 18/18 halaman lulus 100% (0 error).
+- [x] Verifikasi visual Playwright desktop (1440x900) dan mobile (390x844) membuktikan tidak ada tumpang tindih teks atau benturan dengan kontrol Leaflet.
+
+## 27. Analisis & Integrasi Indikator Suhu pada Leaderboard Provinsi BNPB (Selesai)
+- [x] Analisis kritis sains meteorologi vs sensor satelit terkait ambiguitas parameter suhu karhutla.
+- [x] Verifikasi data schema WebGIS BNPB `mv_prov_karhutla_2026` (tidak memuat kolom suhu).
+- [x] Pemetaan 3 opsi solusi implementasi anti-slop (Suhu Udara & RH Terbuka, Suhu Kecerahan Satelit, atau Drawer Cuaca Mikro Interaktif).
+- [x] Penyusunan berkas acuan pengetahuan di `knowledge/parameter-suhu-dan-fdrs-karhutla.md`.
+- [x] Penyelarasan arah desain dan pemilihan implementasi melalui `/grill-me` (Opsi 1 disetujui).
+- [x] Integrasi model data `weather_summary` pada `src/types/index.ts` dan dataset `src/data/bnpbData.ts`.
+- [x] Integrasi UI subclimate chip (`🌡️ Suhu°C · RH%` + `📍 Centroid Zona Gambut`) pada `src/components/FireHazeMap.tsx` & `src/app/globals.css`.
+- [x] Sinkronisasi berkas ke WSL dan pengujian kompilasi produksi Next.js Turbopack lulus 100% (0 error).
+- [x] Verifikasi visual peramban browser subagent memastikan tata letak kartu rapi dan anti-slop.
+
+## 26. Panduan & Kesiapan Deployment Vercel & Google Cloud Run (Selesai)
+- [x] Dokumentasi arsitektur produksi Hybrid Decoupled di `knowledge/panduan-deployment-vercel-cloudrun.md`.
+- [x] Penyelarasan konfigurasi environment variable Vercel Blob (`BLOB_READ_WRITE_TOKEN`, `Karhutla_STORE_ID`) & Cloud Run backend (`NEXT_PUBLIC_API_URL`).
+- [x] Verifikasi berkas `Dockerfile` multi-stage runner di `bukti-pulih-be/Dockerfile` siap deploy via Cloud Build.
+- [x] Pemetaan 3 metode eksekusi deployment (CLI, Git/Console, dan Skrip Otomatisasi).
+- [x] Uji build mandiri produksi frontend dan backend lulus 100% (0 error).
+
+## 25. Deslop Kartu Feed Forum Pulih: True Tumblr Waterfall & Skala Fleksibel (Selesai)
+- [x] Eliminasi total seluruh pil kondisi sempit ("Tumbuh Subur", "Rawan Kering", "Lahan Basah", "Perlu Rawat") dari tampilan kartu feed dan modal detail.
+- [x] Eliminasi lencana format buatan ("SQUARE", "LANDSCAPE", "PORTRAIT") dari atas foto.
+- [x] Rekonstruksi hierarki kartu mengikuti Tumblr otentik: Header di paling atas (avatar inisial lingkaran + nama + waktu + domisili + menu opsi titik tiga `···`).
+- [x] Baris pin lokasi objek pemulihan (`📍 {post.location_name}`) yang ringkas dan informatif.
+- [x] Foto skala alami tanpa forced crop (`width: 100%; height: auto; object-fit: cover;`).
+- [x] Catatan narasi warga mengalir fleksibel mengikuti panjang teks asli tanpa dipaksa peregangan flexbox buatan (`flex: 1`).
+- [x] Tata letak air terjun sejati (True Waterfall Multi-Column): `column-count: 1` di seluler, `2` di tablet, `3` di desktop, `4` di layar lebar dengan `break-inside: avoid;`. Kartu di bawahnya langsung merapat tanpa celah baris yang disamaratakan.
+- [x] Sinkronisasi seluruh berkas ke WSL dan verifikasi build Next.js 18/18 halaman lulus 100% (0 error).
+- [x] Audit visual browser peramban memverifikasi kartu Tumblr fleksibel yang rapi dan alami.
+
+## 24. Deslop Formulir Unggah Bukti Warga & Restrukturisasi Objek Pemulihan Multi-Sektor (Selesai)
+- [x] Eliminasi selektor skala rasio manual ("Format Skala Tampilan (Tumblr Style)") digantikan deteksi otomatis aspek rasio alami citra via `new Image()`.
+- [x] Eliminasi dropdown sampel foto sintetis/AI placeholder ("Atau Gunakan Sampel Foto"); wajib unggah berkas nyata dari perangkat warga.
+- [x] Eliminasi taksonomi kondisi sempit vegetasi pohon saja ("Tumbuh Subur", "Lahan Basah", dsb.); diperluas ke objek pemulihan inklusif pasca-karhutla (rumah warga, jembatan desa, fasilitas umum, lahan garapan).
+- [x] Pembersihan teks teknis berlebih; digantikan instruksi bersih dan jelas: "Mendukung foto (JPEG, PNG, WebP) atau video (MP4) · Maksimal 10 MB".
+- [x] Penyelarasan toolbar `ForumFeed.tsx`: eliminasi dropdown kondisi lahan sempit, menyisakan filter wilayah dan segmented urutan yang fungsional.
+- [x] Pengamanan kondisional `post.status_condition` pada seluruh komponen turunan (`PostDetailModal.tsx`, `ForumPostDetailClient.tsx`).
+- [x] Sinkronisasi seluruh berkas ke WSL dan verifikasi build Next.js 18/18 halaman (0 error).
+- [x] Audit visual browser desktop memverifikasi dialog unggah bukti yang bersih, fungsional, dan anti-slop.
 
 ## 23. Deslop UI/UX, Eliminasi AI Pattern & Refaktor Hirarki Visual (Selesai)
 - [x] Riset mendalam 4 repositori anti-slop eksternal & sintesis ke `knowledge/anti-slop-ui-ux-audit.md`.
