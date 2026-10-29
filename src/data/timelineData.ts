@@ -1,16 +1,10 @@
-// src/data/timelineData.ts
-// -> penyedia data mock linimasa partisipasi relawan
-//      -> 6 log bulanan per petak (5 riwayat + 1 terbaru) untuk kalender pertumbuhan
-//      -> foto lokal per bulan di public/journal/{plot_code}/m{n}.jpg
-//      -> data upvote konfirmasi warga dan catatan autentik kader
+// Todo:
+// -> Build six monthly sample entries per plot using local journal photos.
 
+// --- Sample timeline ---
 import { TimelineItem, TreeStatus } from "@/types";
 import { STATUS_DISPLAY, formatDateId } from "@/utils/plotDisplay";
 
-// helper --------------------------------------------------------------------------
-// function buat path foto bulanan lokal
-// input param : plotCode, month (1-6)
-// output : string path public
 function journalPhoto(plotCode: string, month: number): string {
   return `/journal/${plotCode.toLowerCase()}/m${month}.jpg`;
 }
@@ -21,9 +15,9 @@ interface MonthEntry {
   note: string;
 }
 
-// function buat bikin log bulanan sebelumnya dari log terbaru satu petak
-// input param : latest (log terbaru), history (data per bulan, urut dari terlama)
-// output : TimelineItem[] urut dari terlama, tanpa log terbaru
+// Purpose: Build sample history from the latest plot entry.
+// Input: latest plot entry and oldest-first monthly samples.
+// Output: Oldest-first history, excluding the latest entry.
 function buildHistory(latest: TimelineItem, history: MonthEntry[]): TimelineItem[] {
   const plotTag = latest.postmark_badge.split("•")[1]?.trim() ?? latest.plot_code;
   return history.map((entry, i) => {
@@ -53,9 +47,7 @@ function buildHistory(latest: TimelineItem, history: MonthEntry[]): TimelineItem
     };
   });
 }
-// end of helper ------------------------------------------------------------------
 
-// log terbaru per petak (bulan ke-6) ----------------------------------------------
 const latestLogs: TimelineItem[] = [
   {
     id: "670c6a2b1d8f8a001a222221",
@@ -160,9 +152,7 @@ const latestLogs: TimelineItem[] = [
     comment_count: 3,
   },
 ];
-// end of log terbaru --------------------------------------------------------------
 
-// riwayat bulan ke-1 sampai ke-5 per petak ----------------------------------------
 const [kalbar, bekasi, kalteng] = latestLogs;
 
 export const mockTimelineData: TimelineItem[] = [
@@ -191,4 +181,4 @@ export const mockTimelineData: TimelineItem[] = [
   ]),
   kalteng,
 ];
-// end of riwayat bulanan ----------------------------------------------------------
+// --- end of Sample timeline ---

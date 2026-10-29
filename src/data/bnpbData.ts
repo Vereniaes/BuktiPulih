@@ -1,7 +1,7 @@
-// src/data/bnpbData.ts
-// -> penyedia data mock adapter bnpb karhutla 2026 riil
-//      -> data 6 provinsi terdampak hasil query ke gis.bnpb.go.id
+// Todo:
+// -> Provide a fixed BNPB-shaped snapshot with sample restoration and weather fields.
 
+// --- BNPB fallback ---
 import { BnpbSyncData } from "@/types";
 
 export const mockBnpbData: BnpbSyncData = {
@@ -125,3 +125,4 @@ export const mockBnpbData: BnpbSyncData = {
     },
   ],
 };
+// --- end of BNPB fallback ---

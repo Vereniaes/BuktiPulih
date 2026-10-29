@@ -1,10 +1,7 @@
-// src/data/forumPostsData.ts
-// -> penyedia dataset postingan forum partisipasi warga (tumblr-style feed)
-//      -> foto skala bebas (square, portrait, landscape) dari warga dan relawan lapangan
-//      -> komparasi media sebelum vs sesudah (comparative_media)
-//      -> lencana sertifikasi kader lapangan (kader_badge) & rekam jejak audit (field_verifications)
-//      -> data interaksi: suka (likes), tayangan (views), dan utas komentar berprofil
+// Todo:
+// -> Provide sample posts and their lookup helpers.
 
+// --- Sample posts ---
 import { ForumPost } from "@/types";
 
 export const initialForumPosts: ForumPost[] = [
@@ -610,14 +607,11 @@ export const initialForumPosts: ForumPost[] = [
   },
 ];
 
-// helper --------------------------------------------------------------------------
-// function pencari postingan forum berdasarkan id
 export function getForumPostById(id: string): ForumPost | undefined {
   return initialForumPosts.find((p) => p.id === id);
 }
 
-// function pengambil seluruh id postingan untuk generateStaticParams
 export function getAllForumPostIds(): string[] {
   return initialForumPosts.map((p) => p.id);
 }
-// end of helper ------------------------------------------------------------------
+// --- end of Sample posts ---

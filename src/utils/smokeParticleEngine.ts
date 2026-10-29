@@ -1,9 +1,7 @@
-// src/utils/smokeParticleEngine.ts
-// -> mesin simulasi partikel kabut asap mengalir (gaussian plume particle flow)
-//      -> diproyeksikan langsung pada koordinat geografis leaflet (map.latLngToContainerPoint)
-//      -> partikel ditiup mengikuti vektor kecepatan dan arah hembusan angin
-//      -> gradasi warna & kepekatan otomatis menyesuaikan status tingkat bahaya kebakaran
+// Todo:
+// -> Animate illustrative smoke particles using hotspot positions and configured wind.
 
+// --- Smoke animation ---
 import L from "leaflet";
 import { HotspotPoint } from "@/types";
 
@@ -29,8 +27,7 @@ interface SmokeParticle {
   colorType: "aktif membara" | "berasap tebal" | "tahap pendinginan";
 }
 
-// helper --------------------------------------------------------------------------
-// konversi arah mata angin ke sudut radian vektor hembusan (arah ke mana angin bertiup)
+// Wind labels describe the source direction; particles travel downwind.
 function getWindAngleRad(dir: WindDirection): number {
   switch (dir) {
     case "N": return -Math.PI / 2; // bertiup ke utara (atas)
@@ -45,7 +42,6 @@ function getWindAngleRad(dir: WindDirection): number {
   }
 }
 
-// tentukan palet warna partikel berbasis status kebakaran
 function getSmokeColorRgb(status: HotspotPoint["status_kebakaran"]): { r: number; g: number; b: number } {
   if (status === "aktif membara") {
     return { r: 220, g: 38, b: 38 }; // merah pekat bara
@@ -55,7 +51,6 @@ function getSmokeColorRgb(status: HotspotPoint["status_kebakaran"]): { r: number
   }
   return { r: 180, g: 215, b: 230 }; // uap air putih kebiruan pendinginan
 }
-// end of helper ------------------------------------------------------------------
 
 export class SmokeParticleEngine {
   private canvas: HTMLCanvasElement;
@@ -81,7 +76,6 @@ export class SmokeParticleEngine {
     this.resize();
   }
 
-  // sesuaikan ukuran kanvas dengan container leaflet -----------------------------
   public resize(): void {
     const size = this.map.getSize();
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
@@ -92,13 +86,11 @@ export class SmokeParticleEngine {
     this.ctx.scale(dpr, dpr);
   }
 
-  // perbarui daftar titik api dan inisialisasi kumpulan partikel -------------------
   public setHotspots(hotspots: HotspotPoint[]): void {
     this.hotspots = hotspots;
     this.rebuildParticles();
   }
 
-  // perbarui konfigurasi simulasi angin -------------------------------------------
   public updateConfig(newConfig: Partial<SmokeParticleConfig>): void {
     this.config = { ...this.config, ...newConfig };
     if (!this.config.isPlaying && this.animFrameId) {
@@ -113,7 +105,7 @@ export class SmokeParticleEngine {
     this.particles = [];
     if (this.hotspots.length === 0) return;
 
-    // alokasikan 36 partikel per hotspot untuk simulasi fluida ringan 60 fps
+    // Bound particle count per hotspot; this is a visual effect, not a dispersion model.
     const particlesPerHotspot = 36;
 
     this.hotspots.forEach((spot, idx) => {
@@ -136,7 +128,6 @@ export class SmokeParticleEngine {
     });
   }
 
-  // siklus render animasi loop ---------------------------------------------------
   private loop = (): void => {
     if (this.isDestroyed) return;
 
@@ -165,14 +156,12 @@ export class SmokeParticleEngine {
     this.stop();
   }
 
-  // render frame simulasi kabut asap ----------------------------------------------
   public render(): void {
     const size = this.map.getSize();
     this.ctx.clearRect(0, 0, size.x, size.y);
 
     if (this.hotspots.length === 0 || this.particles.length === 0) return;
 
-    // hitung posisi titik api di layar
     const screenPositions = this.hotspots.map((spot) => {
       try {
         const point = this.map.latLngToContainerPoint(spot.coordinates);
@@ -191,16 +180,14 @@ export class SmokeParticleEngine {
       : getWindAngleRad(this.config.windDirection);
 
     const humidity = this.config.relativeHumidity ?? 75;
-    // faktor sebaran horizontal berbasis kelembapan relatif
+    // Humidity changes the appearance only; these factors are illustrative.
     const humiditySpreadFactor = humidity < 50 ? 1.25 : (humidity > 80 ? 0.85 : 1.0);
-    // laju kecepatan partikel per frame
     const speedNormalized = (this.config.windSpeedKmh / 30) * 0.007;
 
     this.particles.forEach((p) => {
       const origin = screenPositions[p.hotspotIndex];
       if (!origin || !origin.isOnScreen) return;
 
-      // majukan progress partikel
       if (this.config.isPlaying) {
         p.progress += speedNormalized * p.speedFactor;
         if (p.progress > 1.0) {
@@ -209,15 +196,13 @@ export class SmokeParticleEngine {
         }
       }
 
-      // hitung posisi partikel di layar mengikuti vektor angin + kerucut dispersi
       const totalAngle = windAngle + p.offsetAngle;
       const currentDist = p.progress * p.maxDistancePx * humiditySpreadFactor;
       const px = origin.x + Math.cos(totalAngle) * currentDist;
       const py = origin.y + Math.sin(totalAngle) * currentDist;
 
-      // ukuran membesar, opasitas memudar
       const currentRadius = p.initialRadius + p.progress * (p.maxRadius - p.initialRadius);
-      // kurva opasitas: muncul lembut, lalu memudar halus
+      // Fade particles in before fading them out to avoid a visible restart.
       const fadeIn = Math.min(1, p.progress * 4);
       const fadeOut = 1 - p.progress;
       const currentOpacity = p.initialOpacity * fadeIn * fadeOut;
@@ -225,7 +210,6 @@ export class SmokeParticleEngine {
       if (currentOpacity <= 0.01) return;
 
       let rgb = getSmokeColorRgb(p.colorType);
-      // jika kelembapan tinggi, kabut beruap lebih terang/keputihan
       if (humidity > 80 && p.colorType !== "aktif membara") {
         rgb = {
           r: Math.min(255, Math.round(rgb.r * 0.85 + 30)),
@@ -234,7 +218,6 @@ export class SmokeParticleEngine {
         };
       }
 
-      // gambar partikel dengan gradien radial kabut lembut
       const grad = this.ctx.createRadialGradient(px, py, 0, px, py, currentRadius);
       grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${currentOpacity.toFixed(3)})`);
       grad.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${(currentOpacity * 0.6).toFixed(3)})`);
@@ -247,3 +230,4 @@ export class SmokeParticleEngine {
     });
   }
 }
+// --- end of Smoke animation ---

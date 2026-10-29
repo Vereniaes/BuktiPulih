@@ -1,9 +1,7 @@
-// src/data/hotspotsData.ts
-// -> penyedia data sebaran titik api aktif (hotspot) dan radius kabut asap (smoke haze)
-//      -> diselaraskan dengan data agregasi webgis bnpb (mv_prov_karhutla_2026)
-//      -> data riil sensor satelit pengorbit bumi nasa modis dan noaa viirs
-//      -> parameter suhu kecerahan termal (kelvin), frp (megawatt), dan verifikasi darat
+// Todo:
+// -> Provide fixed hotspot examples, not current satellite observations.
 
+// --- Sample hotspots ---
 import { HotspotPoint } from "@/types";
 
 export const initialHotspotsData: HotspotPoint[] = [
@@ -120,3 +118,4 @@ export const initialHotspotsData: HotspotPoint[] = [
     last_overpass: "14 Okt 2026, 13:10 WIB",
   },
 ];
+// --- end of Sample hotspots ---

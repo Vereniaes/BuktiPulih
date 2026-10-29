@@ -1,4 +1,8 @@
-/* Keep the desktop portal header unchanged and scope the mobile disclosure panel. */
+/* Todo:
+-> Style desktop navigation and the mobile menu.
+*/
+
+/* --- Header styles --- */
 .header { position: sticky; top: 0; z-index: 1100; }
 .menuPanel { display: contents; }
 .mobileReport { display: none; }
@@ -158,3 +162,4 @@
 @media (max-width:860px) {
   :global(body):has(:global(#hotspot-time-range)) .mobileReport { visibility:hidden; pointer-events:none; }
 }
+/* --- end of Header styles --- */

@@ -1,9 +1,7 @@
-// src/components/GrowthCalendar.tsx
-// -> kalender pertumbuhan bibit (jurnal petak) sebagai bukti utama halaman
-//      -> tab map folder per wilayah, berbagi state filter dengan peta
-//      -> satu baris = satu petak, enam kolom = enam bulan terakhir
-//      -> klik foto untuk membuka catatan bulan tersebut di bawah baris (tanpa modal)
+// Todo:
+// -> Group monthly plot notes and open the selected note below its row.
 
+// --- Growth calendar ---
 "use client";
 
 import React, { useState } from "react";
@@ -19,17 +17,12 @@ interface GrowthCalendarProps {
   onSelectRegion: (key: string) => void;
 }
 
-// helper --------------------------------------------------------------------------
-// function buat ambil log bulanan satu petak, urut dari terlama
-// input param : items (semua log), plotCode
-// output : TimelineItem[] maksimal MONTHS_SHOWN log terakhir
 function getPlotMonths(items: TimelineItem[], plotCode: string): TimelineItem[] {
   return items
     .filter((item) => item.plot_code === plotCode)
     .sort((a, b) => a.monitoring_date.localeCompare(b.monitoring_date))
     .slice(-MONTHS_SHOWN);
 }
-// end of helper ------------------------------------------------------------------
 
 export const GrowthCalendar: React.FC<GrowthCalendarProps> = ({
   plots,
@@ -51,7 +44,6 @@ export const GrowthCalendar: React.FC<GrowthCalendarProps> = ({
         foto bibit per bulan
       </h2>
 
-      {/* tab map folder wilayah ------------------------------------------------- */}
       <div className="folder-tabs" role="tablist" aria-label="pilih wilayah">
         {REGION_TABS.map((tab) => (
           <button
@@ -70,9 +62,7 @@ export const GrowthCalendar: React.FC<GrowthCalendarProps> = ({
           </button>
         ))}
       </div>
-      {/* end of tab map folder -------------------------------------------------- */}
 
-      {/* grid kalender per petak ------------------------------------------------ */}
       <div className="journal-sheet">
         <p className="hand-note hand-note-mobile" aria-hidden="true">
           geser untuk bulan berikutnya &rarr;
@@ -124,7 +114,6 @@ export const GrowthCalendar: React.FC<GrowthCalendarProps> = ({
               </ol>
             )}
 
-            {/* catatan bulan terpilih ------------------------------------------- */}
             {openLog && openLog.plot_code === plot.properties.plot_code && (
               <div className="journal-detail">
                 <p className="journal-detail-meta">
@@ -134,13 +123,12 @@ export const GrowthCalendar: React.FC<GrowthCalendarProps> = ({
                 <p className="journal-detail-note">&ldquo;{openLog.field_notes}&rdquo;</p>
               </div>
             )}
-            {/* end of catatan bulan terpilih ------------------------------------ */}
           </div>
         ))}
 
         {rows.length === 0 && <p className="journal-empty">belum ada petak di wilayah ini.</p>}
       </div>
-      {/* end of grid kalender --------------------------------------------------- */}
     </section>
   );
 };
+// --- end of Growth calendar ---

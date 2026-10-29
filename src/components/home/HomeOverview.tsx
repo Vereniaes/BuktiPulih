@@ -1,8 +1,7 @@
-// Homepage overview, field stories, and actions into the portal.
 // Todo:
-// -> Keep stories connected to their detail pages
-// -> Show motion and pending feedback without changing data flows
+// -> Show regional summaries, field stories, and portal actions.
 
+// --- Homepage overview ---
 "use client";
 import { useMemo } from "react";
 import { domAnimation, LazyMotion, MotionConfig, useReducedMotion } from "motion/react";
@@ -356,3 +355,4 @@ export function HomeOverview(props: Props) {
     </LazyMotion>
   );
 }
+// --- end of Homepage overview ---

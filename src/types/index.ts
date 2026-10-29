@@ -1,11 +1,7 @@
-// src/types/index.ts
-// -> definisi tipe data global aplikasi buktipulih
-//      -> tipe data spasial petak restorasi (plots)
-//      -> tipe data linimasa memo catatan relawan
-//      -> tipe data metrik impact ledger
-//      -> tipe data sinkronisasi karhutla bnpb
+// Todo:
+// -> Define plot, timeline, post, and environmental data shapes.
 
-// model data spasial petak --------------------------------------------------------
+// --- Shared types ---
 export type EcosystemType = "gambut" | "hutan_kota" | "mineral";
 export type TreeStatus = "subur" | "perlu_rawat" | "kritis" | "mati";
 
@@ -38,9 +34,7 @@ export interface PlotFeatureCollection {
   type: "FeatureCollection";
   features: PlotFeature[];
 }
-// end of model spasial petak ------------------------------------------------------
 
-// model data metrik impact ledger -------------------------------------------------
 export interface ImpactLedgerData {
   total_planted_trees: number;
   total_alive_trees: number;
@@ -51,9 +45,7 @@ export interface ImpactLedgerData {
   total_field_reports: number;
   last_updated_at: string;
 }
-// end of model metrik impact ledger -----------------------------------------------
 
-// model data linimasa relawan -----------------------------------------------------
 export interface TimelineItem {
   id: string;
   plot_id: string;
@@ -87,9 +79,7 @@ export interface TimelineItem {
   };
   comment_count: number;
 }
-// end of model linimasa relawan ---------------------------------------------------
 
-// model data bnpb karhutla --------------------------------------------------------
 export interface BnpbProvinceItem {
   provinsi: string;
   tgl_update: string;
@@ -116,9 +106,7 @@ export interface BnpbSyncData {
   sync_timestamp: string;
   provinces: BnpbProvinceItem[];
 }
-// end of model bnpb karhutla ------------------------------------------------------
 
-// model profil warga ringan untuk komentar & posting ------------------------------
 export interface UserProfileLight {
   user_id?: string;
   avatar_url?: string | null;
@@ -128,7 +116,6 @@ export interface UserProfileLight {
   city: string;
 }
 
-// model komentar forum partisipasi ------------------------------------------------
 export interface ForumComment {
   id: string;
   post_id: string;
@@ -137,7 +124,6 @@ export interface ForumComment {
   created_at: string;
 }
 
-// model verifikasi lapangan oleh kader bersertifikat ------------------------------
 export interface FieldVerification {
   id: string;
   verifier_name: string;
@@ -151,7 +137,6 @@ export interface FieldVerification {
   created_at: string;
 }
 
-// model media komparasi sebelum dan sesudah restorasi ------------------------------
 export interface ComparativeMedia {
   before_url: string;
   before_label: string;
@@ -159,7 +144,6 @@ export interface ComparativeMedia {
   after_label: string;
 }
 
-// model postingan forum partisipasi tumblr-style ----------------------------------
 export interface ForumPost {
   persisted?: boolean;
   location?: { type: "Point"; coordinates: [number, number] };
@@ -202,7 +186,6 @@ export interface ForumPost {
   comments: ForumComment[];
 }
 
-// model titik api & sebaran kabut asap bnpb ----------------------------------------
 export interface HotspotPoint {
   id: string;
   provinsi: string;
@@ -220,13 +203,11 @@ export interface HotspotPoint {
   last_overpass?: string;
 }
 
-// model observasi satelit termal & sebaran asap riil -------------------------------
 export type WindDirection = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 export type MapViewMode = "both" | "satellite" | "haze_wind";
 export type SatelliteTimeWindowHours = 6 | 12 | 24;
 export type TimeWindowMinutes = 15 | 60 | 180 | 1440; // kompatibilitas backwards
 
-// model data cuaca aktual (live weather bmkg / open-meteo) -----------------------
 export interface LiveWeatherData {
   wind_speed_kmh: number;
   wind_direction_deg: number;
@@ -239,9 +220,6 @@ export interface LiveWeatherData {
   is_live: boolean;
 }
 
-
-
-
 export interface RecoveryReport extends ForumPost {
   location: { type: "Point"; coordinates: [number, number] };
   ecosystem_type: EcosystemType;
@@ -249,3 +227,4 @@ export interface RecoveryReport extends ForumPost {
   verification_status: "unverified";
 }
 export type EvidenceSubmission = Pick<RecoveryReport, "location_name" | "region_key" | "caption" | "media" | "location" | "ecosystem_type" | "condition" | "province" | "city" | "place_detail"> & { submission_id: string; is_anonymous: boolean };
+// --- end of Shared types ---

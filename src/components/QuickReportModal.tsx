@@ -1,9 +1,7 @@
-// src/components/QuickReportModal.tsx
-// -> formulir pelaporan pohon ramah kader (boomer-friendly wizard 4 langkah)
-//      -> integrasi html5 geolocation riil dengan deteksi akurasi sinyal
-//      -> kompresi foto kamera hp langsung di memori browser (canvas webp ~150kb)
-//      -> 3 tombol visual kondisi tanaman dan tombol plus-minus tinggi bibit
+// Todo:
+// -> Collect location and photo evidence, then submit or save a report draft.
 
+// --- Plot report ---
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -30,7 +28,6 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
   const [notes, setNotes] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // state koordinat gps -----------------------------------------------------------
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number }>({
     lat: -0.02241,
     lng: 109.33318,
@@ -38,12 +35,10 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
   });
   const [gpsStatus, setGpsStatus] = useState<"accurate" | "medium" | "fallback">("accurate");
 
-  // state citra kamera ------------------------------------------------------------
   const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ambil lokasi gps riil browser saat modal dibuka -------------------------------
   useEffect(() => {
     if (isOpen && typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -57,18 +52,16 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
           setGpsStatus(acc < 15 ? "accurate" : "medium");
         },
         () => {
-          // fallback jika izin gps ditolak di browser laptop
+          // A denied location request uses the fixed fallback point below.
           setGpsStatus("fallback");
         },
         { enableHighAccuracy: true, timeout: 6000 }
       );
     }
   }, [isOpen]);
-  // end of gps --------------------------------------------------------------------
 
   if (!isOpen) return null;
 
-  // handler pemilihan file / foto kamera ------------------------------------------
   const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -83,9 +76,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
       setIsCompressing(false);
     }
   };
-  // end of handler foto -----------------------------------------------------------
 
-  // handler simpan laporan --------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -109,7 +100,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
       setStep(1);
       setCompressionResult(null);
     } catch {
-      // simpan secara offline
+      // Keep the draft when the report cannot be sent.
       saveOfflineDraft(payload);
       setIsSubmitting(false);
       onClose();
@@ -117,12 +108,10 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
       setStep(1);
     }
   };
-  // end of handler simpan laporan --------------------------------------------------
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-content-card">
-        {/* header modal --------------------------------------------------------- */}
         <div className="modal-header">
           <div>
             <span
@@ -146,10 +135,8 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
             ✕
           </button>
         </div>
-        {/* end of header modal --------------------------------------------------- */}
 
         <form onSubmit={handleSubmit} className="modal-body">
-          {/* langkah 1: lokasi & petak ------------------------------------------ */}
           {step === 1 && (
             <div>
               <div
@@ -237,9 +224,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
               </button>
             </div>
           )}
-          {/* end of langkah 1 ---------------------------------------------------- */}
 
-          {/* langkah 2: ambil foto & kompresi canvas ------------------------------ */}
           {step === 2 && (
             <div>
               <input
@@ -355,9 +340,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
               </div>
             </div>
           )}
-          {/* end of langkah 2 ---------------------------------------------------- */}
 
-          {/* langkah 3: pilih kondisi pohon (3 tombol raksasa 56px) ---------------- */}
           {step === 3 && (
             <div>
               <label
@@ -445,9 +428,7 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
               </div>
             </div>
           )}
-          {/* end of langkah 3 ---------------------------------------------------- */}
 
-          {/* langkah 4: tinggi pohon & catatan kader ---------------------------- */}
           {step === 4 && (
             <div>
               <div style={{ marginBottom: "18px" }}>
@@ -570,9 +551,9 @@ export const QuickReportModal: React.FC<QuickReportModalProps> = ({
               </div>
             </div>
           )}
-          {/* end of langkah 4 ---------------------------------------------------- */}
         </form>
       </div>
     </div>
   );
 };
+// --- end of Plot report ---

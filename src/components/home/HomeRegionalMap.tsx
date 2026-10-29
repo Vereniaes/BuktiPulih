@@ -1,10 +1,7 @@
-// HomeRegionalMap: Peta gelap nusantara interaktif buat sebaran karhutla & pemulihan
-// -> kontrol dropdown wilayah, filter lapisan, periode observasi, dan preview card
 // Todo:
-// -> render peta satelit gelap nusantara pake leaflet
-// -> titik panas (merah), petak pemulihan (hijau), dan bukti warga (kuning)
-// -> kartu pratinjau mengambang di pojok kanan bawah
+// -> Render fixed example markers on an Esri imagery map.
 
+// --- Regional map example ---
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
@@ -19,7 +16,6 @@ interface Props {
   language?: "id" | "en";
 }
 
-// Data koordinat titik indikator sebaran nusantara -----------------------------------
 interface MapPoint {
   id: string;
   name: string;
@@ -53,7 +49,6 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
   const [periodFilter, setPeriodFilter] = useState<string>("24h");
   const [selectedPreview, setSelectedPreview] = useState<MapPoint>(SAMPLE_POINTS[0]);
 
-  // # inisialisasi peta leaflet gelap nusantara ---------------------------------------
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -67,10 +62,8 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
       preferCanvas: true,
     });
 
-    // Zoom control di kiri atas
     L.control.zoom({ position: "topleft" }).addTo(map);
 
-    // Tile layer basemap satelit nusantara bertema zamrud (mockup image 2)
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, Earthstar Geographics',
       maxZoom: 18,
@@ -86,7 +79,6 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
     };
   }, []);
 
-  // # render marker titik di peta berdasarkan filter ----------------------------------
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
@@ -125,7 +117,6 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
     });
   }, [mapLayerFilter]);
 
-  // # responsif terhadap perubahan wilayah pilihan ------------------------------------
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     if (selectedRegion === "kalbar") mapInstanceRef.current.setView([-0.1, 110.5], 7);
@@ -141,7 +132,6 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
 
   return (
     <section className={styles.darkRegionalMapCard} aria-labelledby="regional-map-title">
-      {/* Baris Judul & Kontrol Header Peta -------------------------------------------- */}
       <div className={styles.darkMapHeader}>
         <div className={styles.darkMapHeaderLeft}>
           <h2 id="regional-map-title" className={styles.darkMapTitle}>
@@ -216,11 +206,9 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
         </div>
       </div>
 
-      {/* Kanvas Peta Leaflet Gelap --------------------------------------------------- */}
       <div className={styles.darkMapCanvasWrap}>
         <div ref={mapContainerRef} className={styles.darkMapCanvas} />
 
-        {/* Legenda Mengambang Kiri Bawah */}
         <div className={styles.darkMapLegend}>
           <div className={styles.legendItem}>
             <span className={`${styles.legendDot} ${styles.dotHotspot}`} />
@@ -236,7 +224,6 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
           </div>
         </div>
 
-        {/* Kartu Pratinjau Mengambang Kanan Bawah */}
         <div className={styles.darkMapFloatingCard}>
           <img
             src="/hero-peat-seedling.jpg"
@@ -279,3 +266,4 @@ export function HomeRegionalMap({ selectedRegion, onSelectRegion, onOpenRecovery
     </section>
   );
 }
+// --- end of Regional map example ---

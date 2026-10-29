@@ -1,9 +1,7 @@
-// src/utils/imageCompression.ts
-// -> utilitas kompresi citra berbasis html5 canvas di sisi klien
-//      -> mengubah foto kamera hp (5-12mb) menjadi webp (~150kb)
-//      -> resolusi proporsional maksimal 1280px lebar
-//      -> mencegah kegagalan unggah di jaringan 3g/edge pedalaman gambut
+// Todo:
+// -> Resize photos in the browser and encode WebP; output size depends on the image.
 
+// --- Image compression ---
 export interface CompressionResult {
   dataUrl: string;
   originalSizeBytes: number;
@@ -28,7 +26,6 @@ export const compressImageClient = (
         let width = img.width;
         let height = img.height;
 
-        // kalkulasi rasio aspek ---------------------------------------------------
         const scale = Math.min(1, maxWidth / width, maxHeight / height);
         width = Math.max(1, Math.round(width * scale));
         height = Math.max(1, Math.round(height * scale));
@@ -45,10 +42,9 @@ export const compressImageClient = (
 
         ctx.drawImage(img, 0, 0, width, height);
 
-        // ekspor ke format webp hemat kuota --------------------------------------
         const dataUrl = canvas.toDataURL("image/webp", quality);
 
-        // estimasi ukuran file hasil kompresi base64
+        // Estimate decoded bytes from the base64 payload.
         const head = "data:image/webp;base64,";
         const base64Length = dataUrl.length - head.length;
         const compressedBytes = Math.round((base64Length * 3) / 4);
@@ -77,3 +73,4 @@ export const compressImageClient = (
     reader.readAsDataURL(file);
   });
 };
+// --- end of Image compression ---

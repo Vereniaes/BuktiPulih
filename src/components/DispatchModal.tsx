@@ -1,9 +1,7 @@
-// src/components/DispatchModal.tsx
-// -> modul dialog lembar disposisi posko siaga karhutla
-//      -> pratinjau lembar disposisi resmi sebelum dicetak / diunduh
-//      -> tombol unduh berkas gambar png resolusi tinggi
-//      -> tombol cetak langsung window.print untuk simpan pdf a4 resmi
+// Todo:
+// -> Preview a dispatch summary and provide PNG and browser-print actions.
 
+// --- Dispatch dialog ---
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -15,15 +13,10 @@ interface DispatchModalProps {
   params: DispatchExportParams;
 }
 
-// helper --------------------------------------------------------------------------
-// function pembuat nama berkas ekspor terstandarisasi
-// input param : docNumber
-// output : string nama berkas
 function getSafeFileName(docNumber: string): string {
   const sanitized = docNumber.replace(/[^a-zA-Z0-9_-]/g, "_");
   return `${sanitized}.png`;
 }
-// end of helper ------------------------------------------------------------------
 
 export const DispatchModal: React.FC<DispatchModalProps> = ({
   isOpen,
@@ -35,7 +28,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
 
   if (!isOpen) return null;
 
-  // eksekusi unduh gambar png resolusi tinggi ------------------------------------
   const handleDownloadPng = () => {
     setIsExporting(true);
     try {
@@ -49,7 +41,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
     }
   };
 
-  // eksekusi cetak / simpan pdf bawaan peramban -----------------------------------
   const handlePrintPdf = () => {
     window.print();
   };
@@ -57,7 +48,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Lembar Disposisi Siaga Karhutla">
       <div className="dispatch-modal-card">
-        {/* header modal */}
         <div className="dispatch-modal-head">
           <div>
             <h3 style={{ fontSize: "16px", fontWeight: 800, margin: 0, color: "var(--ink)" }}>
@@ -78,9 +68,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </button>
         </div>
 
-        {/* kontainer dokumen yang dapat dicetak (printable area) */}
         <div ref={printableAreaRef} className="dispatch-sheet-document">
-          {/* kop surat */}
           <div className="dispatch-kop">
             <div className="dispatch-kop-title">
               KONSORSIUM RESTORASI BUKTIPULIH & SATGAS PENANGGULANGAN KARHUTLA
@@ -94,7 +82,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             <div className="dispatch-kop-divider"></div>
           </div>
 
-          {/* judul & metadata disposisi */}
           <div style={{ textAlign: "center", marginBottom: "14px" }}>
             <h2 style={{ fontSize: "15px", fontWeight: 800, color: "#0E753B", margin: 0, letterSpacing: "0.5px" }}>
               LEMBAR DISPOSISI SITUASI LAPANGAN & SEBARAN ASAP
@@ -106,7 +93,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             </div>
           </div>
 
-          {/* baris ringkasan 4 metrik */}
           <div className="dispatch-metrics-grid">
             <div className="dispatch-metric-item">
               <span className="dispatch-metric-lbl">Status Kawasan</span>
@@ -144,7 +130,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             </div>
           </div>
 
-          {/* tabel titik rawan prioritas & deteksi satelit */}
           <div style={{ marginTop: "16px" }}>
             <div style={{ fontSize: "12px", fontWeight: 800, marginBottom: "6px", color: "#0F172A" }}>
               2. RINCIAN TITIK RAWAN, DETEKSI SENSOR & TINDAKAN SATGAS
@@ -190,7 +175,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             </table>
           </div>
 
-          {/* log verifikasi darat kader lapangan terkini */}
           <div style={{ marginTop: "16px" }}>
             <div style={{ fontSize: "12px", fontWeight: 800, marginBottom: "6px", color: "#0F172A" }}>
               3. LOG VERIFIKASI DARAT & PEMANTAUAN KADER LAPANGAN (TERKINI)
@@ -216,7 +200,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             </div>
           </div>
 
-          {/* instruksi operasional posko */}
           <div className="dispatch-instructions-box">
             <div style={{ fontSize: "11.5px", fontWeight: 800, color: "#0F172A", marginBottom: "4px" }}>
               INSTRUKSI OPERASIONAL KEDARURATAN (DISPOSISI SATGAS)
@@ -229,7 +212,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
             </ul>
           </div>
 
-          {/* kolom pengesahan & tanda tangan */}
           <div className="dispatch-sign-row">
             <div style={{ fontSize: "10px", color: "#64748B", maxWidth: "340px" }}>
               Dokumen ini diterbitkan secara otomatis oleh Sistem Pemantauan Karhutla BuktiPulih. Valid tanpa tanda tangan basah untuk keperluan koordinasi darurat lapangan.
@@ -245,7 +227,6 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </div>
         </div>
 
-        {/* bilah aksi unduh & cetak */}
         <div className="dispatch-modal-actions">
           <button
             type="button"
@@ -283,3 +264,4 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
     </div>
   );
 };
+// --- end of Dispatch dialog ---

@@ -1,9 +1,7 @@
-// Portal state and existing contribution flows. URL keeps the selected tab and region.
-// -> halaman utama portal multi-tab buktipulih (platform partisipasi warga)
-//      -> tab 1: pantau karhutla & sebaran asap (webgis bnpb live)
-//      -> tab 2: bukti pulih (peta pemulihan kawasan pasca-padam & sekat kanal)
-//      -> tab 3: forum pulih (feed partisipatif warga tumblr-style)
+// Todo:
+// -> Connect navigation, data, account dialogs, and report actions.
 
+// --- Portal ---
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -36,7 +34,6 @@ import {
   RecoveryReport,
 } from "@/types";
 
-// dynamic import peta leaflet untuk mencegah isu render sisi server (ssr) -------
 const HomeOverview = dynamic(() => import("@/components/home/HomeOverview").then(mod => mod.HomeOverview));
 const ForumFeed = dynamic(() => import("@/components/ForumFeed").then(mod => mod.ForumFeed));
 
@@ -49,10 +46,8 @@ const RecoveryMap = dynamic(
   () => import("@/components/RecoveryMap").then((mod) => mod.RecoveryMap),
   { ssr: false, loading: () => <div className="hazard-map-loading" role="status">Memuat peta…</div> }
 );
-// end of dynamic import peta ------------------------------------------------------
 
 export default function PortalClient() {
-  // state portal navigasi 3 tab ---------------------------------------------------
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
@@ -85,16 +80,13 @@ export default function PortalClient() {
     document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
   }, [activePortalTab]);
 
-  // state data aplikasi -----------------------------------------------------------
   const forumSource = useForumPosts(activePortalTab === "home" ? 2 : 1);
   const { posts: forumPosts, setPosts: setForumPosts } = forumSource;
 
-  // state filter wilayah peta pemulihan -------------------------------------------
   const [plotSource, setPlotSource] = useState<DataResult<PlotFeatureCollection>>({ data: mockPlotsData, origin: "sample", fetched_at: null, failed: false });
   const [bnpbSource, setBnpbSource] = useState<DataResult<BnpbSyncData>>({ data: mockBnpbData, origin: "sample", fetched_at: null, failed: false });
   const [isDataLoading, setIsDataLoading] = useState(true);
 
-  // state modal interaksi ---------------------------------------------------------
   const [isReportOpen, setIsReportOpen] = useState(false);
   const reportRequested = isReportOpen || searchParams.get("compose") === "1";
   const resumedReport = useRef(false);
@@ -112,8 +104,6 @@ export default function PortalClient() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
-
-  // state dwi-bahasa (ID / EN) ----------------------------------------------------
   const [language, setLanguage] = useState<"id" | "en">("id");
   const toggleLanguage = () => {
     setLanguage((prev) => {
@@ -123,7 +113,6 @@ export default function PortalClient() {
     });
   };
 
-  // ambil data dari backend & localstorage saat pertama kali dimuat ---------------
   const refreshAllData = useCallback(async () => {
     try {
       const overview = await getHomepageDataApi();
@@ -152,7 +141,6 @@ export default function PortalClient() {
 
   }, []);
 
-  // helper notifikasi toast -------------------------------------------------------
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -160,7 +148,6 @@ export default function PortalClient() {
     }, 4500);
   };
 
-  // handler suka / like postingan -------------------------------------------------
   const handleToggleLike = (postId: string) => {
     setForumPosts((prev) => {
       const updated = prev.map((post) => {
@@ -182,7 +169,6 @@ export default function PortalClient() {
     });
   };
 
-  // handler kirim postingan baru oleh warga ---------------------------------------
   const handleCreatePost = (newPost: RecoveryReport) => {
     setForumPosts((prev) => {
       const updated = [newPost, ...prev];
@@ -194,7 +180,6 @@ export default function PortalClient() {
     navigate({ tab: "recovery", region: "all", plot: null, report: newPost.id });
   };
 
-  // handler sinkronisasi draft offline --------------------------------------------
   const handleSyncOffline = async () => {
     if (!currentUser) { setIsAuthModalOpen(true); return; }
     if (!["GOVERNMENT_VERIFIER", "ADMIN_SUPER"].includes(currentUser.role)) {
@@ -214,7 +199,6 @@ export default function PortalClient() {
 
   return (
     <div className={`portal-shell ${activePortalTab === "home" ? "portal-home" : isMapPage ? "portal-fire" : ""}`} style={{ minHeight: isMapPage ? 0 : "100vh", display: "flex", flexDirection: "column", overflowAnchor: activePortalTab === "forum" ? "none" : undefined }}>
-      {/* toast notifikasi mengambang -------------------------------------------- */}
       {toastMessage && (
         <div role="status"
           style={{
@@ -242,7 +226,6 @@ export default function PortalClient() {
         </div>
       )}
 
-      {/* header global navigasi portal ----------------------------------------- */}
       <HeaderNav
         activeTab={activePortalTab}
         setActiveTab={setActivePortalTab}
@@ -255,7 +238,6 @@ export default function PortalClient() {
         onToggleLanguage={toggleLanguage}
       />
 
-      {/* konten utama portal dinamis berdasarkan tab aktif ---------------------- */}
       <PageMotion key={activePortalTab} tabIndex={-1} className={isMapPage ? "portal-map-main" : "container"} style={{ flex: 1, paddingTop: activePortalTab === "home" || isMapPage ? 0 : "24px" }}>
         {activePortalTab === "home" && (
           <HomeOverview
@@ -278,10 +260,8 @@ export default function PortalClient() {
           />
         )}
 
-        {/* TAB 1: PANTAU KARHUTLA & KABUT ASAP (LIVE BNPB) ----------------------- */}
         {activePortalTab === "fire" && isMounted && <FireHazeMap language={language} />}
 
-        {/* TAB 2: BUKTI PULIH (PETA PEMULIHAN PASCA-PADAM) ------------------------ */}
         {activePortalTab === "recovery" && isMounted && (
           <RecoveryMap
             plots={plotSource.data}
@@ -297,7 +277,6 @@ export default function PortalClient() {
           />
         )}
 
-        {/* TAB 3: RUANG SUARA HIJAU (KIRIMAN WARGA) ------------------- */}
         {activePortalTab === "forum" && (
           <div>
             <ForumFeed
@@ -314,7 +293,6 @@ export default function PortalClient() {
 
       </PageMotion>
 
-      {/* modal buat postingan bukti warga baru (+) ------------------------------ */}
       <CreatePostModal
         isOpen={reportRequested}
         onClose={closeReport}
@@ -322,7 +300,6 @@ export default function PortalClient() {
         language={language}
       />
 
-      {/* modal autentikasi login kader jika diperlukan -------------------------- */}
       <AuthModal
         isOpen={isAuthModalOpen || (reportRequested && !currentUser && accountStatus !== "loading")}
         onClose={() => {
@@ -342,9 +319,7 @@ export default function PortalClient() {
         }}
       />
 
-      {/* footer berlatar utuh lanskap restorasi buktipulih ---------------------- */}
       {!isMapPage && <footer className="global-footer-stage">
-        {/* lapisan latar seni lanskap vektor dengan smooth blend */}
         <div className="footer-backdrop-canvas" aria-hidden="true">
           <img
             src="/footer-panoramic-backdrop.jpg"
@@ -354,9 +329,7 @@ export default function PortalClient() {
           <div className="footer-top-blend" />
         </div>
 
-        {/* konten interaktif footer */}
         <div className="footer-content-layer">
-          {/* zona slogan kampanye di atas lembah hijau */}
           <div className="footer-fluid-wrapper">
             <div className="footer-campaign-hero">
               <h2 className="footer-campaign-title">Pulihkan Lahan, Rawat Masa Depan</h2>
@@ -366,7 +339,6 @@ export default function PortalClient() {
             </div>
           </div>
 
-          {/* zona dasar hijau hutan: navigasi & transparansi */}
           <div className="footer-base-panel">
             <div className="footer-fluid-wrapper">
               <div className="footer-inner">
@@ -499,3 +471,4 @@ export default function PortalClient() {
     </div>
   );
 }
+// --- end of Portal ---

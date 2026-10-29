@@ -1,9 +1,7 @@
-// src/app/robots.ts
-// -> instruksi perayap mesin pencari (robots.txt) untuk portal buktipulih
-//      -> mengizinkan pengindeksan seluruh rute publik
-//      -> membatasi akses ke endpoint api internal (/api/)
-//      -> mendeklarasikan lokasi sitemap.xml resmi
+// Todo:
+// -> Define crawler access and the sitemap URL.
 
+// --- Crawler rules ---
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
@@ -16,3 +14,4 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: "https://buktipulih.id/sitemap.xml",
   };
 }
+// --- end of Crawler rules ---

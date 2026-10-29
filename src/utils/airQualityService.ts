@@ -1,10 +1,7 @@
-// src/utils/airQualityService.ts
-// -> modul integrasi sensor live kualitas udara ispu klhk & pm2.5
-//      -> penarik data kualitas udara atmosferik dari open-meteo cams
-//      -> perhitungan indeks standar pencemar udara (ispu) permen lhk no 14/2020
-//      -> penyedia rekomendasi kesehatan dan mitigasi kabut asap lapangan
-//      -> penampung cache memori berbasis koordinat
+// Todo:
+// -> Read Open-Meteo air-quality estimates and calculate a PM2.5 index.
 
+// --- Air quality ---
 import { fetchHourlyForecast } from "./hourlyForecast";
 
 export const fetchAirQualityForecast = (lat: number, lon: number) =>
@@ -32,21 +29,16 @@ interface AirQualityCacheItem {
   expiresAt: number;
 }
 
-// penampung cache lokal memori (ttl 15 menit)
 const aqiCache = new Map<string, AirQualityCacheItem>();
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-// helper --------------------------------------------------------------------------
-// function pembentuk cache key dari koordinat geospasial
-// input param : lat (latitude), lng (longitude)
-// output : string cache key format "lat_lng"
 function getCacheKey(lat: number, lng: number): string {
   return `${lat.toFixed(2)}_${lng.toFixed(2)}`;
 }
 
-// function hitung ispu berdasarkan konsentrasi pm2.5 permen lhk no 14 tahun 2020
-// input param : pm25 (konsentrasi ug/m3)
-// output : object { ispu_index, ispu_category, ispu_color, health_advice }
+// Purpose: Interpolate the PM2.5 breakpoints used by this legacy helper.
+// Input: PM2.5 concentration in ug/m3.
+// Output: Index, category, color, and advice for this pollutant only.
 export function calculateIspuFromPm25(pm25: number): {
   ispu_index: number;
   ispu_category: IspuCategory;
@@ -95,7 +87,6 @@ export function calculateIspuFromPm25(pm25: number): {
     };
   }
 
-  // di atas 250.4 ug/m3 (berbahaya)
   const ispu = Math.round(((500 - 301) / (500 - 250.5)) * (Math.min(500, p) - 250.5) + 301);
   return {
     ispu_index: Math.min(500, ispu),
@@ -105,9 +96,6 @@ export function calculateIspuFromPm25(pm25: number): {
   };
 }
 
-// function data fallback kualitas udara saat jaringan terputus
-// input param : pm25Estimate
-// output : LiveAirQualityData default
 function getFallbackAirQuality(pm25Estimate: number = 85): LiveAirQualityData {
   const ispuInfo = calculateIspuFromPm25(pm25Estimate);
   return {
@@ -124,11 +112,10 @@ function getFallbackAirQuality(pm25Estimate: number = 85): LiveAirQualityData {
     is_live: false,
   };
 }
-// end of helper ------------------------------------------------------------------
 
-// function penarik live air quality dari open-meteo air-quality api
-// input param : lat (latitude), lng (longitude), fallbackPm25 (opsional)
-// output : Promise<LiveAirQualityData>
+// Purpose: Read modeled air quality and cache the result.
+// Input: Coordinates and a fallback PM2.5 value.
+// Output: Air-quality values with their source and live flag.
 export async function fetchLiveAirQuality(
   lat: number,
   lng: number,
@@ -147,7 +134,7 @@ export async function fetchLiveAirQuality(
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000), // batas waktu 5 detik
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!res.ok) {
@@ -193,3 +180,4 @@ export async function fetchLiveAirQuality(
     return fallback;
   }
 }
+// --- end of Air quality ---

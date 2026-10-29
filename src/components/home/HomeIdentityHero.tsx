@@ -1,7 +1,7 @@
-// Homepage intro with a forest photo and the main restoration actions.
 // Todo:
-// -> Show the mission and its main actions
+// -> Show the forest image, mission, and primary actions.
 
+// --- Homepage intro ---
 "use client";
 import { useRef } from "react";
 import { useReducedMotion, useScroll, useSpring, useTransform, type Variants } from "motion/react";
@@ -94,3 +94,4 @@ export function HomeIdentityHero({ onOpenRecovery, onOpenForum, onOpenReport, la
     </section>
   );
 }
+// --- end of Homepage intro ---

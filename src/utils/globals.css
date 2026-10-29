@@ -1,7 +1,8 @@
-/* src/app/globals.css */
-/* -> fondasi sistem desain antarmuka buktipulih (jurnal petak) */
-/* -> estetika: personal growth journal x warm paper x polaroid notes */
+/* Todo:
+-> Keep the older stylesheet copy; the app imports app/globals.css.
+*/
 
+/* --- Legacy styles --- */
 @import "leaflet/dist/leaflet.css";
 
 :root {
@@ -1070,7 +1071,7 @@ button {
   margin-top: 2px;
 }
 
-/* boomer-friendly modal dialog */
+/* Report dialog */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1201,9 +1202,7 @@ button {
   }
 }
 
-/* ==========================================================================
-   PORTAL MULTI-TAB & FORUM TUMBLR-STYLE (BUKTIPULIH PARTICIPATORY REVISION)
-   ========================================================================== */
+/* PORTAL MULTI-TAB & FORUM TUMBLR-STYLE (BUKTIPULIH PARTICIPATORY REVISION) */
 
 /* header tag badge */
 .logo-tag-badge {
@@ -1598,9 +1597,7 @@ button {
   background-color: #FFFFFF;
 }
 
-/* ==========================================================================
-   TUMBLR-STYLE MASONRY FORUM PULIH
-   ========================================================================== */
+/* TUMBLR-STYLE MASONRY FORUM PULIH */
 
 .forum-pulih-section {
   padding-bottom: 48px;
@@ -1929,9 +1926,7 @@ button {
   font-size: 11.5px;
 }
 
-/* ==========================================================================
-   POST DETAIL MODAL & COMMENTS
-   ========================================================================== */
+/* POST DETAIL MODAL & COMMENTS */
 
 .modal-backdrop {
   position: fixed;
@@ -2236,9 +2231,7 @@ button {
   cursor: pointer;
 }
 
-/* ==========================================================================
-   CREATE POST MODAL
-   ========================================================================== */
+/* CREATE POST MODAL */
 
 .create-post-modal-card {
   background-color: #FFFFFF;
@@ -2407,12 +2400,7 @@ button {
   background-color: var(--forest-green-800);
 }
 
-/* ==========================================================================
-   SISTEM TEMA GELAP (ITEM - IJO - ORANGE)
-   -> kanvas hitam obsidian & charcoal tajam
-   -> ijo emerald untuk pemulihan, status hidup & verifikasi
-   -> orange api/hazard untuk aksi utama, tombol '+ posting', filter aktif & sorotan
-   ========================================================================== */
+/* SISTEM TEMA GELAP (ITEM - IJO - ORANGE) -> kanvas hitam obsidian & charcoal tajam -> ijo emerald untuk pemulihan, status hidup & verifikasi -> orange api/hazard untuk aksi utama, tombol '+ posting', filter aktif & sorotan */
 
 [data-theme="dark"] {
   /* color tokens - dark obsidian & charcoal surfaces */
@@ -2743,9 +2731,7 @@ button {
   color: #22C55E;
 }
 
-/* ==========================================================================
-   SIMULASI KARHUTLA & ASAP (OYENZA COMPARE DASHBOARD STYLE)
-   ========================================================================== */
+/* SIMULASI KARHUTLA & ASAP (OYENZA COMPARE DASHBOARD STYLE) */
 
 /* header komparasi */
 .cv-container {
@@ -2777,7 +2763,7 @@ button {
   max-width: 760px;
 }
 
-/* segmented pill switcher (identik dengan oyenza) */
+/* Map mode switcher */
 .cv-win,
 .seg {
   display: inline-flex;
@@ -3722,9 +3708,7 @@ button {
   box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35);
 }
 
-/* ==========================================================================
-   TIMELAPSE 24-HOUR PLAYER DOCK (OYENZA MEDIA CONTROL STYLE)
-   ========================================================================== */
+/* TIMELAPSE 24-HOUR PLAYER DOCK (OYENZA MEDIA CONTROL STYLE) */
 
 .timelapse-dock-container {
   position: absolute;
@@ -4009,9 +3993,7 @@ button {
   .timelapse-param-pill.hide-on-mobile {
     display: none;
   }
-/* ==========================================================================
-   FORUM PULIH FULL PAGE ARTICLE VIEW (/forum/[id])
-   ========================================================================== */
+/* FORUM PULIH FULL PAGE ARTICLE VIEW (/forum/[id]) */
 
 .forum-article-page-wrap {
   max-width: 820px;
@@ -4561,7 +4543,7 @@ button {
   }
 }
 
-/* format cetak a4 resmi (@media print) */
+/* A4 print layout */
 @media print {
   body * {
     visibility: hidden;
@@ -4588,9 +4570,7 @@ button {
   }
 }
 
-/* ==========================================================================
-   TAB 1: PANEL PERINGKAT PROVINSI BNPB WEBGIS & SENSOR SATELIT
-   ========================================================================== */
+/* TAB 1: PANEL PERINGKAT PROVINSI BNPB WEBGIS & SENSOR SATELIT */
 .bnpb-tab-content,
 .satellite-spots-container {
   display: flex;
@@ -4988,9 +4968,7 @@ button {
   border: 1px solid;
 }
 
-/* ==========================================================================
-   TAB 2: FILTER GEOSPASIAL LINTAS PROVINSI & RINGKASAN PEMULIHAN
-   ========================================================================== */
+/* TAB 2: FILTER GEOSPASIAL LINTAS PROVINSI & RINGKASAN PEMULIHAN */
 .recovery-filter-container {
   display: flex;
   flex-direction: column;
@@ -5234,9 +5212,7 @@ button {
   color: #080C0E;
 }
 
-/* ==========================================================================
-   FORUM DETAIL: SERTIFIKASI KADER, KOMPARASI SEBELUM-SESUDAH & AUDIT LAPANGAN
-   ========================================================================== */
+/* FORUM DETAIL: SERTIFIKASI KADER, KOMPARASI SEBELUM-SESUDAH & AUDIT LAPANGAN */
 .kader-cert-card {
   background-color: var(--surface-muted);
   border: 1px solid var(--surface-border);
@@ -5530,6 +5506,4 @@ button {
   padding-top: 6px;
   border-top: 1px dashed var(--surface-border);
 }
-
-
-
+/* --- end of Legacy styles --- */

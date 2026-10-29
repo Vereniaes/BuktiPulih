@@ -1,8 +1,7 @@
-// src/components/BnpbSyncBanner.tsx
-// -> banner penyelarasan data resmi bnpb karhutla 2026
-//      -> status koneksi aktif ke WebGIS BNPB (gis.bnpb.go.id)
-//      -> rincian wilayah terpantau tanpa emoji atau visual slop
+// Todo:
+// -> Show supplied provincial totals and their recorded update date.
 
+// --- BNPB summary ---
 import React, { useState } from "react";
 import { BnpbSyncData } from "@/types";
 import { formatId, formatDateId } from "@/utils/plotDisplay";
@@ -16,7 +15,6 @@ export const BnpbSyncBanner: React.FC<BnpbSyncBannerProps> = ({ data }) => {
 
   return (
     <aside className="bnpb-ticker-card" aria-label="sinkronisasi data bnpb">
-      {/* status sinkronisasi ---------------------------------------------------- */}
       <div className="ticker-info">
         <span className="ticker-pulse" aria-hidden="true" />
         <div>
@@ -28,9 +26,7 @@ export const BnpbSyncBanner: React.FC<BnpbSyncBannerProps> = ({ data }) => {
           </p>
         </div>
       </div>
-      {/* end of status sinkronisasi --------------------------------------------- */}
 
-      {/* tombol toggle rincian -------------------------------------------------- */}
       <div>
         <button
           type="button"
@@ -41,9 +37,7 @@ export const BnpbSyncBanner: React.FC<BnpbSyncBannerProps> = ({ data }) => {
           {isExpanded ? "tutup rincian wilayah" : "lihat 6 provinsi terpantau"}
         </button>
       </div>
-      {/* end of tombol toggle --------------------------------------------------- */}
 
-      {/* grid provinsi terpantau ------------------------------------------------ */}
       {isExpanded && (
         <div className="ticker-expand-grid">
           {data.provinces.map((prov) => (
@@ -61,7 +55,7 @@ export const BnpbSyncBanner: React.FC<BnpbSyncBannerProps> = ({ data }) => {
           ))}
         </div>
       )}
-      {/* end of grid provinsi --------------------------------------------------- */}
     </aside>
   );
 };
+// --- end of BNPB summary ---

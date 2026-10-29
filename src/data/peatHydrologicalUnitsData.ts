@@ -1,9 +1,7 @@
-// src/data/peatHydrologicalUnitsData.ts
-// -> penyedia data spasial geojson kesatuan hidrologis gambut (khg) brgm / klhk
-//      -> 7 kawasan kubah gambut prioritas di 6 provinsi karhutla bnpb
-//      -> fungsi lindung (kubah gambut >3m) & fungsi budidaya ekosistem gambut
-//      -> regulasi pp no. 71/2014 jo pp no. 57/2016 tentang perlindungan ekosistem gambut
+// Todo:
+// -> Provide fixed peat-area examples; boundary provenance is not recorded here.
 
+// --- Sample peat areas ---
 export interface PeatHydrologicalUnitProperties {
   khg_id: string;
   nama_khg: string;
@@ -238,3 +236,4 @@ export const peatHydrologicalUnitsData: PeatHydrologicalUnitGeoJson = {
     },
   ],
 };
+// --- end of Sample peat areas ---

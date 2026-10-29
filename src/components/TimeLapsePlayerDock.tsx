@@ -1,9 +1,7 @@
-// src/components/TimeLapsePlayerDock.tsx
-// -> komponen pemutar linimasa melayang (floating interactive player dock)
-//      -> bilah kendali media putar otomatis kilas balik 24 jam karhutla
-//      -> slider penjelajah waktu (-24 jam s.d. kondisi terkini)
-//      -> selektor kecepatan animasi (1x, 2x, 4x) & penanda parameter riil per jam
+// Todo:
+// -> Control the selected time-lapse frame and playback speed.
 
+// --- Playback controls ---
 "use client";
 
 import React from "react";
@@ -21,16 +19,11 @@ interface TimeLapsePlayerDockProps {
   onClose: () => void;
 }
 
-// helper --------------------------------------------------------------------------
-// function pemilih frame aktif berdasarkan offset jam
-// input param : frames (array), currentOffset (number)
-// output : TimeLapseFrame atau null
 function getActiveFrame(frames: TimeLapseFrame[], currentOffset: number): TimeLapseFrame | null {
   if (frames.length === 0) return null;
   const match = frames.find((f) => f.hourOffset === currentOffset);
   return match || frames[frames.length - 1];
 }
-// end of helper ------------------------------------------------------------------
 
 export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
   frames,
@@ -45,17 +38,14 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
 }) => {
   const activeFrame = getActiveFrame(frames, currentOffset);
 
-  // navigasi 1 langkah jam ke belakang
   const handleStepBack = () => {
     onSeek(Math.max(-24, currentOffset - 1));
   };
 
-  // navigasi 1 langkah jam ke depan
   const handleStepForward = () => {
     onSeek(Math.min(0, currentOffset + 1));
   };
 
-  // siklus rotasi kecepatan putar (1x -> 2x -> 4x -> 1x)
   const handleCycleSpeed = () => {
     const nextSpeed = playbackSpeed === 1 ? 2 : playbackSpeed === 2 ? 4 : 1;
     onSpeedChange(nextSpeed);
@@ -69,7 +59,6 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
       aria-label="Panel Pemutar Kilas Balik 24 Jam"
       role="region"
     >
-      {/* 1. bilah informasi stempel waktu & penutup */}
       <div className="timelapse-dock-header">
         <div className="timelapse-dock-title-group">
           <span className="timelapse-status-pulse" />
@@ -94,7 +83,6 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
         </button>
       </div>
 
-      {/* 2. bilah kontrol media & slider penjelajah waktu */}
       <div className="timelapse-dock-controls">
         <div className="timelapse-media-btns">
           <button
@@ -139,7 +127,6 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
           </button>
         </div>
 
-        {/* slider waktu dengan rel progress terisi */}
         <div className="timelapse-slider-track-wrap">
           <input
             type="range"
@@ -158,7 +145,6 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
             aria-label="Slider linimasa jam"
           />
 
-          {/* penanda jam klik langsung (ticks) */}
           <div className="timelapse-ticks-row">
             {[-24, -18, -12, -6, 0].map((tick) => (
               <button
@@ -174,7 +160,6 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
         </div>
       </div>
 
-      {/* 3. ringkasan parameter meteorologi jam aktif */}
       {activeFrame && (
         <div className="timelapse-dock-parameters">
           <div className="timelapse-param-pill">
@@ -209,3 +194,4 @@ export const TimeLapsePlayerDock: React.FC<TimeLapsePlayerDockProps> = ({
     </aside>
   );
 };
+// --- end of Playback controls ---

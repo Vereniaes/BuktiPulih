@@ -1,8 +1,7 @@
-// src/utils/offlineQueue.ts
-// -> utilitas manajemen antrean draft laporan offline kader
-//      -> penyimpanan lokal berbasis localstorage / browser cache
-//      -> sinkronisasi otomatis ketika koneksi internet pulih
+// Todo:
+// -> Keep report drafts in localStorage and retry them through the report API.
 
+// --- Offline reports ---
 import { SubmitReportPayload, submitReportApi } from "../services/api";
 
 const STORAGE_KEY = "buktipulih_offline_reports_queue";
@@ -66,8 +65,9 @@ export const syncAllOfflineDrafts = async (): Promise<{
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
   } catch {
-    // noop
+    // Leave saved drafts intact if storage is unavailable.
   }
 
   return { syncedCount: synced, remainingCount: remaining.length };
 };
+// --- end of Offline reports ---

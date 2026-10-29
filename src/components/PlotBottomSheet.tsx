@@ -1,9 +1,7 @@
-// src/components/PlotBottomSheet.tsx
-// -> rincian petak yang dipilih pada peta restorasi
-//      -> tingkat kelangsungan hidup dengan bilah kemajuan
-//      -> rincian bibit hidup, ditanam, dan mati
-//      -> aksi melihat catatan lapangan petak tersebut
+// Todo:
+// -> Show the selected plot and link to its field notes.
 
+// --- Plot details ---
 import React from "react";
 import { PlotFeature } from "@/types";
 import { STATUS_DISPLAY, formatId, formatDateId } from "@/utils/plotDisplay";
@@ -57,7 +55,6 @@ export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
         </button>
       </div>
 
-      {/* bilah kemajuan tingkat hidup ------------------------------------------ */}
       <div className="sheet-progress-section">
         <div className="progress-labels">
           <span>kelangsungan hidup bibit</span>
@@ -70,9 +67,7 @@ export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
           />
         </div>
       </div>
-      {/* end of bilah kemajuan -------------------------------------------------- */}
 
-      {/* metrik petak ----------------------------------------------------------- */}
       <div className="sheet-metrics-grid">
         <div className="sheet-metric-item">
           <span className="metric-label">ditanam</span>
@@ -87,9 +82,7 @@ export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
           <span className="metric-val text-red">{formatId(deadCount)} bibit</span>
         </div>
       </div>
-      {/* end of metrik ---------------------------------------------------------- */}
 
-      {/* footer panel ----------------------------------------------------------- */}
       <div className="sheet-footer">
         <span className="sheet-coordinator">
           koordinator: <strong>{properties.coordinator_name}</strong> · dicek{" "}
@@ -103,7 +96,7 @@ export const PlotBottomSheet: React.FC<PlotBottomSheetProps> = ({
           {actionLabel}
         </button>
       </div>
-      {/* end of footer ---------------------------------------------------------- */}
     </div>
   );
 };
+// --- end of Plot details ---

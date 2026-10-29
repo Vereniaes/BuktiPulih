@@ -1,10 +1,7 @@
-// src/utils/dispatchExporter.ts
-// -> utilitas ekspor lembar disposisi posko siaga karhutla
-//      -> komposisi lembar disposisi resmi kanvas 2d resolusi tinggi
-//      -> integrasi data satelit nasa modis / noaa viirs & log verifikasi kader darat
-//      -> ekspor berkas grafis png resolusi tinggi tanpa pustaka eksternal
-//      -> format cetak dokumen resmi satgas bnpb / bpbd
+// Todo:
+// -> Render a dispatch summary from supplied data and download it as PNG.
 
+// --- Dispatch export ---
 import { HotspotPoint } from "@/types";
 
 export interface DispatchVerificationLog {
@@ -30,7 +27,6 @@ export interface DispatchExportParams {
   verifications?: DispatchVerificationLog[];
 }
 
-// helper penentu tindakan satgas berbasis fakta lapangan
 export function getActionText(spot: HotspotPoint): string {
   if (spot.status_kebakaran === "tahap pendinginan") return "Pemantauan Sekat";
   if (spot.ground_status === "Kubah Gambut Kering") return "Pembasahan Sekat";
@@ -38,8 +34,9 @@ export function getActionText(spot: HotspotPoint): string {
   return "Verifikasi Overpass";
 }
 
-// helper --------------------------------------------------------------------------
-// function pembuat kanvas lembar disposisi 2d beresolusi tinggi (1200 x 1800 px)
+// Purpose: Render the supplied summary on a 1200 x 1800 canvas.
+// Input: Dispatch data and optional verification notes.
+// Output: Canvas for preview or PNG download.
 export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -48,11 +45,9 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   if (!ctx) throw new Error("Gagal menginisialisasi 2D canvas");
   const fontFamily = getComputedStyle(document.body).fontFamily;
 
-  // latar belakang kertas dokumen resmi
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // bingkai batas terluar
   ctx.strokeStyle = "#0F172A";
   ctx.lineWidth = 3;
   ctx.strokeRect(30, 30, 1140, 1740);
@@ -61,7 +56,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.lineWidth = 1;
   ctx.strokeRect(36, 36, 1128, 1728);
 
-  // 1. KOP SURAT RESMI POSKO --------------------------------------------------------
   ctx.fillStyle = "#0F172A";
   ctx.font = `bold 22px ${fontFamily}`;
   ctx.textAlign = "center";
@@ -72,7 +66,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.fillText("POSKO DARURAT MONITORING GEOSPASIAL & SEBARAN KABUT ASAP LAHAN GAMBUT", 600, 102);
   ctx.fillText("Sekretariat Bersama Pengendalian Karhutla & Restorasi Ekosistem Indonesia", 600, 122);
 
-  // garis pemisah ganda
   ctx.strokeStyle = "#0F172A";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
@@ -86,7 +79,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.lineTo(1150, 145);
   ctx.stroke();
 
-  // 2. JUDUL LEMBAR DISPOSISI & METADATA -------------------------------------------
   ctx.fillStyle = "#0E753B";
   ctx.font = `bold 20px ${fontFamily}`;
   ctx.fillText("LEMBAR DISPOSISI SITUASI LAPANGAN & SEBARAN ASAP", 600, 185);
@@ -101,7 +93,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.fillText(`Klasifikasi   : OPERASIONAL SATGAS DARURAT`, 1140, 220);
   ctx.fillText(`Status Siaga  : ${params.siagaStatus.toUpperCase()}`, 1140, 240);
 
-  // 3. KOTAK 4 KPI METRIK KUNCI ---------------------------------------------------
   const kpiBoxY = 265;
   const kpiBoxW = 260;
   const kpiBoxH = 85;
@@ -135,21 +126,18 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.fillText(kpi.sub, x + 12, kpiBoxY + 70);
   });
 
-  // 4. BAGAN SKETSA SPASIAL SEBARAN KABUT ASAP ------------------------------------
   const mapBoxY = 370;
   const mapBoxH = 270;
   ctx.fillStyle = "#0F172A";
   ctx.font = `bold 14px ${fontFamily}`;
   ctx.fillText("1. SKETSA VISUAL SEBARAN KABUT ASAP & DISPERSI VEKTOR ANGIN", 60, mapBoxY);
 
-  // kontainer peta
   const mapCanvasY = mapBoxY + 12;
   ctx.fillStyle = "#0B111A";
   ctx.fillRect(60, mapCanvasY, 1080, mapBoxH);
   ctx.strokeStyle = "#334155";
   ctx.strokeRect(60, mapCanvasY, 1080, mapBoxH);
 
-  // grid garis halus
   ctx.strokeStyle = "#1E293B";
   ctx.lineWidth = 1;
   for (let gx = 160; gx < 1140; gx += 100) {
@@ -165,7 +153,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.stroke();
   }
 
-  // gambar titik-titik koordinat api dan kerucut dispersi asap
+  // Normalize coordinates to this sketch; this is not a geographic basemap.
   params.hotspots.forEach((spot) => {
     const px = 60 + ((spot.coordinates[1] - 98) / 22) * 1080;
     const py = mapCanvasY + ((3 - spot.coordinates[0]) / 8) * mapBoxH;
@@ -173,13 +161,11 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     const isCooling = spot.status_kebakaran === "tahap pendinginan";
     const smokeColor = isCooling ? "rgba(180, 215, 230, 0.25)" : "rgba(234, 88, 12, 0.35)";
 
-    // kerucut asap
     ctx.fillStyle = smokeColor;
     ctx.beginPath();
     ctx.arc(px + 40, py - 10, spot.smoke_radius_km * 2.8, 0, Math.PI * 2);
     ctx.fill();
 
-    // titik api
     ctx.fillStyle = isCooling ? "#059669" : "#DC2626";
     ctx.beginPath();
     ctx.arc(px, py, 7, 0, Math.PI * 2);
@@ -189,14 +175,12 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // label nama kabupaten & sensor
     ctx.fillStyle = "#F8FAFC";
     ctx.font = `bold 11px ${fontFamily}`;
     const sensorLabel = spot.satellite_sensor?.includes("VIIRS") ? "VIIRS" : "MODIS";
     ctx.fillText(`${spot.kabupaten} [${sensorLabel}] (${spot.pm25_index} µg)`, px + 12, py + 4);
   });
 
-  // legenda mini peta
   ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
   ctx.fillRect(75, mapCanvasY + mapBoxH - 45, 480, 32);
   ctx.fillStyle = "#DC2626";
@@ -215,7 +199,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.fillStyle = "#FFFFFF";
   ctx.fillText("Radius Dispersi PM2.5", 358, mapCanvasY + mapBoxH - 23);
 
-  // 5. TABEL RINCIAN KABUPATEN & STATUS SENSOR SATELIT ----------------------------
   const tableY = mapCanvasY + mapBoxH + 28;
   ctx.fillStyle = "#0F172A";
   ctx.font = `bold 14px ${fontFamily}`;
@@ -250,10 +233,8 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.font = `11px ${fontFamily}`;
     ctx.fillText(spot.provinsi, 300, currentY + 17);
 
-    // sensor & confidence
     ctx.fillText(`${spot.satellite_sensor || "VIIRS SNPP"} (${spot.confidence_pct || 85}%)`, 480, currentY + 17);
 
-    // status lapangan
     const isCooling = spot.status_kebakaran === "tahap pendinginan";
     ctx.fillStyle = isCooling ? "#059669" : "#DC2626";
     ctx.font = `bold 10.5px ${fontFamily}`;
@@ -263,7 +244,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.font = `11px ${fontFamily}`;
     ctx.fillText(`${spot.pm25_index} µg`, 880, currentY + 17);
 
-    // tindakan satgas
     ctx.fillStyle = isCooling ? "#059669" : "#0284C7";
     ctx.font = `bold 10.5px ${fontFamily}`;
     ctx.fillText(getActionText(spot), 970, currentY + 17);
@@ -271,7 +251,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     currentY += 26;
   });
 
-  // 6. LOG VERIFIKASI DARAT KADER LAPANGAN TERKINI --------------------------------
   const verifY = currentY + 24;
   ctx.fillStyle = "#0F172A";
   ctx.font = `bold 14px ${fontFamily}`;
@@ -304,7 +283,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.fillText("Belum ada log verifikasi darat tambahan hari ini. Menunggu laporan relawan regu patroli.", 75, verifBoxY + 30);
   }
 
-  // 7. INSTRUKSI & DISPOSISI OPERASIONAL SATGAS ------------------------------------
   const notesY = verifBoxY + verifBoxH + 24;
   ctx.fillStyle = "#0F172A";
   ctx.font = `bold 14px ${fontFamily}`;
@@ -330,7 +308,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.fillText(ins, 75, notesBoxY + 24 + i * 21);
   });
 
-  // 8. LEMBAR TANDA TANGAN & PENGESAHAN KEPALA SATGAS -----------------------------
   const signY = notesBoxY + notesBoxH + 30;
   ctx.textAlign = "left";
   ctx.fillStyle = "#475569";
@@ -353,7 +330,6 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   return canvas;
 }
 
-// function pengunduh berkas canvas ke format file png
 export function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename = "lembar-disposisi-karhutla.png"): void {
   const link = document.createElement("a");
   link.download = filename;
@@ -362,4 +338,4 @@ export function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename = "lemba
   link.click();
   document.body.removeChild(link);
 }
-// end of helper ------------------------------------------------------------------
+// --- end of Dispatch export ---

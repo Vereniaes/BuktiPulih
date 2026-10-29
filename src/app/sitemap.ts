@@ -1,15 +1,13 @@
-// src/app/sitemap.ts
-// -> generator sitemap.xml otomatis untuk mesin pencari google
-//      -> menyusun url statis portal (beranda, karhutla, pemulihan, forum)
-//      -> menyusun rute dinamis postingan forum (/forum/[id]) dari dataset riil
+// Todo:
+// -> List portal routes and sample post URLs.
 
+// --- Sitemap ---
 import { MetadataRoute } from "next";
 import { initialForumPosts } from "@/data/forumPostsData";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://buktipulih.id";
 
-  // rute statis utama portal
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
@@ -37,7 +35,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // rute dinamis postingan partisipasi forum pulih
   const postRoutes: MetadataRoute.Sitemap = initialForumPosts.map((post) => ({
     url: `${baseUrl}/forum/${post.id}`,
     lastModified: new Date(post.created_at),
@@ -47,3 +44,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [...staticRoutes, ...postRoutes];
 }
+// --- end of Sitemap ---

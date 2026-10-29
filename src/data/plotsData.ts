@@ -1,9 +1,7 @@
-// src/data/plotsData.ts
-// -> penyedia data mock spasial petak restorasi buktipulih
-//      -> data petak gambut nyata di 6 provinsi prioritas karhutla bnpb & hutan kota bekasi
-//      -> sekat kanal pembasahan gambut, tingkat kelangsungan hidup bibit (survival rate)
-//      -> data kelompok tani pengelola & riwayat pemantauan relawan lapangan
+// Todo:
+// -> Provide sample restoration plots for fallback views.
 
+// --- Sample plots ---
 import { PlotFeatureCollection } from "@/types";
 
 export const mockPlotsData: PlotFeatureCollection = {
@@ -209,3 +207,4 @@ export const mockPlotsData: PlotFeatureCollection = {
     },
   ],
 };
+// --- end of Sample plots ---

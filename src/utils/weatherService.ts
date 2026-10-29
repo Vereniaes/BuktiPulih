@@ -1,9 +1,7 @@
-// src/utils/weatherService.ts
-// -> modul integrasi data cuaca live open-meteo / bmkg
-//      -> penarik data kecepatan dan arah angin per koordinat titik api
-//      -> konversi derajat meteorologis ke 8 arah kompas indonesia
-//      -> penampung cache memori hemat kuota dan pencegah latensi
+// Todo:
+// -> Read Open-Meteo wind and humidity with fixed fallback values.
 
+// --- Weather ---
 import { WindDirection } from "@/types";
 import { fetchHourlyForecast } from "./hourlyForecast";
 
@@ -28,14 +26,12 @@ interface WeatherCacheItem {
   expiresAt: number;
 }
 
-// penampung cache di memori lokal (ttl 15 menit)
 const weatherCache = new Map<string, WeatherCacheItem>();
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-// helper --------------------------------------------------------------------------
-// function konversi derajat angin meteorologi ke 8 mata angin
-// input param : deg (derajat 0 - 360)
-// output : object { cardinal: WindDirection, label_id: string }
+// Purpose: Map meteorological degrees to eight compass labels.
+// Input: Wind direction in degrees.
+// Output: Compass direction and its Indonesian label.
 export function convertDegreeToCardinal(deg: number): { cardinal: WindDirection; label_id: string } {
   const normalized = ((deg % 360) + 360) % 360;
   const index = Math.floor((normalized + 22.5) / 45) % 8;
@@ -46,12 +42,12 @@ export function convertDegreeToCardinal(deg: number): { cardinal: WindDirection;
     { cardinal: "E", label_id: "Timur" },
     { cardinal: "SE", label_id: "Tenggara" },
     { cardinal: "S", label_id: "Selatan" },
-    { cardinal: "BD" as WindDirection, label_id: "Barat Daya" }, // mapping fleksibel
+    { cardinal: "BD" as WindDirection, label_id: "Barat Daya" },
     { cardinal: "W", label_id: "Barat" },
     { cardinal: "NW", label_id: "Barat Laut" },
   ];
 
-  // sesuaikan dengan tipe WindDirection ("SW" untuk Barat Daya)
+  // Use SW for the legacy BD entry in the table.
   const dir = directions[index];
   if (index === 5) {
     return { cardinal: "SW", label_id: "Barat Daya" };
@@ -59,16 +55,10 @@ export function convertDegreeToCardinal(deg: number): { cardinal: WindDirection;
   return dir;
 }
 
-// function pembentuk cache key dari koordinat geospasial
-// input param : lat (latitude), lng (longitude)
-// output : string cache key format "lat_lng"
 function getCacheKey(lat: number, lng: number): string {
   return `${lat.toFixed(2)}_${lng.toFixed(2)}`;
 }
 
-// function data fallback klimatologi saat koneksi terputus
-// input param : lat, lng
-// output : LiveWeatherData default
 function getFallbackWeatherData(lat: number, lng: number): LiveWeatherData {
   return {
     wind_speed_kmh: 14,
@@ -82,11 +72,10 @@ function getFallbackWeatherData(lat: number, lng: number): LiveWeatherData {
     is_live: false,
   };
 }
-// end of helper ------------------------------------------------------------------
 
-// function penarik cuaca live dari open-meteo / bmkg
-// input param : lat, lng
-// output : Promise<LiveWeatherData>
+// Purpose: Read wind and humidity, with a short-lived fixed fallback.
+// Input: Latitude and longitude.
+// Output: Weather values with their source and live flag.
 export async function fetchLiveWeatherData(lat: number, lng: number): Promise<LiveWeatherData> {
   const cacheKey = getCacheKey(lat, lng);
   const now = Date.now();
@@ -101,7 +90,7 @@ export async function fetchLiveWeatherData(lat: number, lng: number): Promise<Li
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000), // proteksi batas waktu 5 detik
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!res.ok) {
@@ -135,12 +124,13 @@ export async function fetchLiveWeatherData(lat: number, lng: number): Promise<Li
 
     return liveData;
   } catch {
-    // fallback cerdas jika gawai offline atau api mengalami throttling
+    // These fixed values are examples, not a BMKG observation.
     const fallback = getFallbackWeatherData(lat, lng);
     weatherCache.set(cacheKey, {
       data: fallback,
-      expiresAt: now + 60 * 1000, // cache 1 menit untuk fallback
+      expiresAt: now + 60 * 1000,
     });
     return fallback;
   }
 }
+// --- end of Weather ---

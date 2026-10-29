@@ -1,4 +1,8 @@
-/* Homepage layout. Existing portal tokens keep both themes consistent. */
+/* Todo:
+-> Style the homepage using shared portal tokens.
+*/
+
+/* --- Homepage styles --- */
 .home { width: 100%; min-width: 0; padding: 0 0 48px; display: grid; gap: 32px; }
 .home h2 { font-size: 22px; line-height: 1.3; letter-spacing: -.025em; }
 .home h3 { font-size: 18px; line-height: 1.4; }
@@ -11,7 +15,7 @@
 .notice { font-size: 13px; border-left: 3px solid var(--warning-amber); padding: 8px 12px; background: var(--surface-muted); }
 .notice button, .mapStatus button, .empty button { color: var(--stamp); text-decoration: underline; font: inherit; font-weight: 700; min-height: 44px; padding: 0 6px; }
 
-/* 3. Seksi Ringkasan Situasi 4 Kartu Metrik (sesuai Gambar 2) */
+/* Situation metrics */
 .situationSection {
   display: flex;
   flex-direction: column;
@@ -141,7 +145,7 @@
   margin: 0;
 }
 
-/* Seksi Tentang BuktiPulih (sesuai Gambar 2) */
+/* About BuktiPulih */
 .aboutSection {
   background: #F1EFE4;
   border: 1px solid rgba(69, 88, 59, 0.08);
@@ -236,7 +240,7 @@
 .textLink { display: inline-flex; align-items: center; min-height: 44px; color: var(--stamp); font-size: 14px; font-weight: 700; text-decoration: none; }
 .textLink:hover { text-decoration: underline; }
 
-/* 4. Dokumentasi Dari Garis Depan: Kabar terbaru dari lapangan (sesuai Gambar 1) */
+/* Field stories */
 .evidenceSection {
   display: flex;
   flex-direction: column;
@@ -396,7 +400,7 @@
   text-decoration: underline;
 }
 
-/* Wide Banner: Hutan pulih lewat banyak tangan (sesuai Gambar 1 di atas footer) */
+/* Participation banner */
 .rangerBanner {
   background: linear-gradient(135deg, #153828 0%, #0E291C 100%);
   border-radius: 16px;
@@ -556,3 +560,4 @@
   .home .actionButton, .home .evidenceCard, .home .evidenceImg { transform: none !important; transition: none !important; }
   .home .spinner { animation: none; }
 }
+/* --- end of Homepage styles --- */

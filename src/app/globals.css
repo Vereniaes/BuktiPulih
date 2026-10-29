@@ -1,7 +1,8 @@
-/* src/app/globals.css */
-/* -> fondasi sistem desain antarmuka buktipulih (jurnal petak) */
-/* -> estetika: personal growth journal x warm paper x polaroid notes */
+/* Todo:
+-> Define shared tokens and portal styles.
+*/
 
+/* --- Portal styles --- */
 @import "leaflet/dist/leaflet.css";
 
 .leaflet-container,
@@ -1302,7 +1303,7 @@ button.logo-brand {
   margin-top: 2px;
 }
 
-/* boomer-friendly modal dialog */
+/* Report dialog */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1490,7 +1491,7 @@ button.logo-brand {
   color: rgba(244, 241, 233, 0.75);
 }
 
-/* Dark mode calibration */
+/* Legacy dark-theme overrides */
 [data-theme="dark"] .global-footer-stage {
   background-color: #10241B;
 }
@@ -1560,9 +1561,7 @@ button.logo-brand {
   }
 }
 
-/* ==========================================================================
-   PORTAL MULTI-TAB & FORUM TUMBLR-STYLE (BUKTIPULIH PARTICIPATORY REVISION)
-   ========================================================================== */
+/* PORTAL MULTI-TAB & FORUM TUMBLR-STYLE (BUKTIPULIH PARTICIPATORY REVISION) */
 
 /* header tag badge */
 .logo-tag-badge {
@@ -1957,9 +1956,7 @@ button.logo-brand {
   background-color: #FFFFFF;
 }
 
-/* ==========================================================================
-   TUMBLR-STYLE MASONRY FORUM PULIH
-   ========================================================================== */
+/* TUMBLR-STYLE MASONRY FORUM PULIH */
 
 .forum-pulih-section {
   padding-bottom: 48px;
@@ -2303,11 +2300,9 @@ button.logo-brand {
   margin-bottom: 16px;
 }
 
-/* ==========================================================================
-   TUMBLR-STYLE MASONRY WATERFALL FEED (FLEXIBLE HEIGHT & NATURAL PHOTO)
-   ========================================================================== */
+/* TUMBLR-STYLE MASONRY WATERFALL FEED (FLEXIBLE HEIGHT & NATURAL PHOTO) */
 
-/* multi-column waterfall: 1 kolom di seluler, 2 di tablet, 3 di desktop, 4 di layar besar */
+/* Responsive post columns */
 .tumblr-masonry-grid {
   column-count: 1;
   column-gap: 20px;
@@ -2334,7 +2329,7 @@ button.logo-brand {
   }
 }
 
-/* tumblr card: tinggi fleksibel mengikuti foto & teks asli (anti sama rata) */
+/* Post height follows media and text */
 .tumblr-card {
   break-inside: avoid;
   margin-bottom: 20px;
@@ -2354,7 +2349,7 @@ button.logo-brand {
   box-shadow: 0 12px 28px rgba(11, 13, 59, 0.09);
 }
 
-/* 1. Header Warga (Tumblr Top Header) */
+/* Post author */
 .tumblr-card-header {
   display: flex;
   justify-content: space-between;
@@ -2428,7 +2423,7 @@ button.logo-brand {
   background-color: var(--surface-bg);
 }
 
-/* 2. Lokasi Objek Pemulihan */
+/* Post location */
 .tumblr-location-row {
   display: flex;
   align-items: center;
@@ -2450,7 +2445,7 @@ button.logo-brand {
   white-space: nowrap;
 }
 
-/* 3. Media Foto / Video Skala Alami (Tanpa Crop & Tanpa Forced Aspect Ratio) */
+/* Post media */
 .tumblr-media-link {
   display: block;
   width: 100%;
@@ -2471,7 +2466,7 @@ button.logo-brand {
   transform: scale(1.015);
 }
 
-/* 4. Catatan Lapangan Warga (Fleksibel Mengikuti Isi) */
+/* Post text */
 .tumblr-card-body {
   padding: 12px 16px 14px 16px;
 }
@@ -2489,7 +2484,7 @@ button.logo-brand {
   word-break: break-word;
 }
 
-/* 5. Footer Aksi Interaksi Tumblr */
+/* Post actions */
 .tumblr-card-footer {
   display: flex;
   justify-content: space-between;
@@ -2556,9 +2551,7 @@ button.logo-brand {
   color: #8C9CAE;
 }
 
-/* ==========================================================================
-   POST DETAIL MODAL & COMMENTS
-   ========================================================================== */
+/* POST DETAIL MODAL & COMMENTS */
 
 .modal-backdrop {
   position: fixed;
@@ -2863,9 +2856,7 @@ button.logo-brand {
   cursor: pointer;
 }
 
-/* ==========================================================================
-   CREATE POST MODAL
-   ========================================================================== */
+/* CREATE POST MODAL */
 
 .create-post-modal-card {
   background-color: #FFFFFF;
@@ -3034,12 +3025,7 @@ button.logo-brand {
   background-color: var(--forest-green-800);
 }
 
-/* ==========================================================================
-   SISTEM TEMA GELAP (ITEM - IJO - ORANGE)
-   -> kanvas hitam obsidian & charcoal tajam
-   -> ijo emerald untuk pemulihan, status hidup & verifikasi
-   -> orange api/hazard untuk aksi utama, tombol '+ posting', filter aktif & sorotan
-   ========================================================================== */
+/* SISTEM TEMA GELAP (ITEM - IJO - ORANGE) -> kanvas hitam obsidian & charcoal tajam -> ijo emerald untuk pemulihan, status hidup & verifikasi -> orange api/hazard untuk aksi utama, tombol '+ posting', filter aktif & sorotan */
 
 [data-theme="dark"] {
   /* color tokens - dark obsidian & charcoal surfaces */
@@ -3370,9 +3356,7 @@ button.logo-brand {
   color: #22C55E;
 }
 
-/* ==========================================================================
-   SIMULASI KARHUTLA & ASAP (OYENZA COMPARE DASHBOARD STYLE)
-   ========================================================================== */
+/* SIMULASI KARHUTLA & ASAP (OYENZA COMPARE DASHBOARD STYLE) */
 
 /* header komparasi */
 .cv-container {
@@ -3404,7 +3388,7 @@ button.logo-brand {
   max-width: 760px;
 }
 
-/* segmented pill switcher (identik dengan oyenza) */
+/* Map mode switcher */
 .cv-win,
 .seg {
   display: inline-flex;
@@ -4377,7 +4361,7 @@ button.logo-brand {
   border-top: 1px solid #E2E8F0;
 }
 
-/* lencana sensor live ispu klhk di header posko siaga */
+/* Air-quality source label */
 .live-ispu-badge {
   display: inline-flex;
   align-items: center;
@@ -4481,9 +4465,7 @@ button.logo-brand {
   box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35);
 }
 
-/* ==========================================================================
-   TIMELAPSE 24-HOUR PLAYER DOCK (OYENZA MEDIA CONTROL STYLE)
-   ========================================================================== */
+/* TIMELAPSE 24-HOUR PLAYER DOCK (OYENZA MEDIA CONTROL STYLE) */
 
 .timelapse-dock-container {
   position: absolute;
@@ -4770,9 +4752,7 @@ button.logo-brand {
   }
 }
 
-/* ==========================================================================
-   FORUM PULIH FULL PAGE ARTICLE VIEW (/forum/[id])
-   ========================================================================== */
+/* FORUM PULIH FULL PAGE ARTICLE VIEW (/forum/[id]) */
 
 .forum-article-page-wrap {
   max-width: 820px;
@@ -5322,7 +5302,7 @@ button.logo-brand {
   }
 }
 
-/* format cetak a4 resmi (@media print) */
+/* A4 print layout */
 @media print {
   body * {
     visibility: hidden;
@@ -5349,9 +5329,7 @@ button.logo-brand {
   }
 }
 
-/* ==========================================================================
-   TAB 1: PANEL PERINGKAT PROVINSI BNPB WEBGIS & SENSOR SATELIT
-   ========================================================================== */
+/* TAB 1: PANEL PERINGKAT PROVINSI BNPB WEBGIS & SENSOR SATELIT */
 .bnpb-tab-content,
 .satellite-spots-container {
   display: flex;
@@ -5790,9 +5768,7 @@ button.logo-brand {
   border: 1px solid;
 }
 
-/* ==========================================================================
-   TAB 2: FILTER GEOSPASIAL LINTAS PROVINSI & RINGKASAN PEMULIHAN
-   ========================================================================== */
+/* TAB 2: FILTER GEOSPASIAL LINTAS PROVINSI & RINGKASAN PEMULIHAN */
 .recovery-filter-container {
   display: flex;
   flex-direction: column;
@@ -6036,9 +6012,7 @@ button.logo-brand {
   color: #080C0E;
 }
 
-/* ==========================================================================
-   FORUM DETAIL: SERTIFIKASI KADER, KOMPARASI SEBELUM-SESUDAH & AUDIT LAPANGAN
-   ========================================================================== */
+/* FORUM DETAIL: SERTIFIKASI KADER, KOMPARASI SEBELUM-SESUDAH & AUDIT LAPANGAN */
 .kader-cert-card {
   background-color: var(--surface-muted);
   border: 1px solid var(--surface-border);
@@ -6333,9 +6307,7 @@ button.logo-brand {
   border-top: 1px dashed var(--surface-border);
 }
 
-/* ==========================================================================
-   WIDGET INDIKATOR TINGGI MUKA AIR TANAH (TMAT) REGULASI PP 57/2016
-   ========================================================================== */
+/* WIDGET INDIKATOR TINGGI MUKA AIR TANAH (TMAT) REGULASI PP 57/2016 */
 
 .tmat-monitor-card {
   background-color: var(--surface-card);
@@ -6693,11 +6665,9 @@ button.logo-brand {
   gap: 4px;
 }
 
-/* ==========================================================================
-   DESLOPPED UI / UX STYLES (ANTI-SLOP ARCHITECTURE)
-   ========================================================================== */
+/* DESLOPPED UI / UX STYLES (ANTI-SLOP ARCHITECTURE) */
 
-/* 1. Unified Status Strip (Deslopped 5-KPI Replacement) */
+/* Status strip */
 .unified-status-strip {
   display: flex;
   align-items: stretch;
@@ -6817,7 +6787,7 @@ button.logo-brand {
   }
 }
 
-/* 2. GrowthCalendar Pending Plot Card (Clean Status Replacement) */
+/* Pending plot card */
 .journal-pending-card {
   flex: 1;
   display: flex;
@@ -6856,7 +6826,7 @@ button.logo-brand {
   line-height: 1.4;
 }
 
-/* 3. Forum Control Bar (Deslopped Toolbar) */
+/* Forum controls */
 .forum-control-bar {
   display: flex;
   justify-content: space-between;
@@ -6999,7 +6969,7 @@ button.logo-brand {
   padding: 44px 0 88px;
 }
 
-/* Bupi Ranger Greeting Pill */
+/* Hero illustration label */
 .bupi-greeting-card {
   display: inline-flex;
   align-items: center;
@@ -7220,7 +7190,7 @@ button.logo-brand {
   }
 }
 
-/* Dark mode theme calibration */
+/* Legacy dark-theme overrides */
 [data-theme="dark"] .home-hero-btn-secondary {
   color: #F1F5F9;
   border-color: rgba(255, 255, 255, 0.18);
@@ -7241,3 +7211,4 @@ button.logo-brand {
 .portal-fire .portal-header { flex-shrink: 0; }
 .portal-map-main { display: flex; width: 100%; max-width: none; min-height: 0; padding: 0; outline: none; }
 .hazard-map-loading { display: grid; place-items: center; width: 100%; height: 100%; background: #e9eee6; color: var(--ink); }
+/* --- end of Portal styles --- */

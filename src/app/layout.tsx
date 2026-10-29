@@ -1,9 +1,7 @@
-// src/app/layout.tsx
-// -> tata letak root aplikasi buktipulih
-//      -> import globals.css dengan design tokens
-//      -> integrasi font Plus Jakarta Sans
-//      -> metadata seo, opengraph whatsapp/twitter, dan structured data schema.org
+// Todo:
+// -> Set shared fonts, metadata, structured data, and account context.
 
+// --- Root layout ---
 import type { Metadata } from "next";
 import "./globals.css";
 import { AccountProvider } from "@/components/account/AccountSession";
@@ -101,3 +99,4 @@ export default function RootLayout({
     </html>
   );
 }
+// --- end of Root layout ---

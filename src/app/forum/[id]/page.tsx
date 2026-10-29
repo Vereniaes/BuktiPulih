@@ -1,9 +1,7 @@
-// src/app/forum/[id]/page.tsx
-// -> rute dinamis halaman penuh postingan forum pulih (/forum/[id])
-//      -> optimasi seo kelas satu dengan generatemetadata & opengraph whatsapp/twitter
-//      -> integrasi generatestaticparams untuk kecepatan akses statis seketika
-//      -> merender komponen interaktif forumpostdetailclient
+// Todo:
+// -> Render sample post pages and metadata, or load persisted posts on the client.
 
+// --- Post page ---
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getForumPostById, getAllForumPostIds } from "@/data/forumPostsData";
@@ -15,10 +13,9 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-// helper --------------------------------------------------------------------------
-// generator metadata dinamis untuk seo mesin pencari & pratinjau tautan whatsapp
-// input param : params (id postingan)
-// output : Metadata Next.js
+// Purpose: Build metadata for sample posts; persisted posts load on the client.
+// Input: Route parameters.
+// Output: Next.js metadata.
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const post = getForumPostById(id);
@@ -68,11 +65,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-// function penyedia daftar id statis untuk pra-render turbopack
 export function generateStaticParams() {
   return getAllForumPostIds().map((id) => ({ id }));
 }
-// end of helper ------------------------------------------------------------------
 
 export default async function ForumDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -120,3 +115,4 @@ export default async function ForumDetailPage({ params }: PageProps) {
     </PageMotion>
   );
 }
+// --- end of Post page ---

@@ -1,8 +1,7 @@
-// src/services/api.ts
-// -> klien komunikasi antarmuka api backend buktipulih
-//      -> memanggil endpoint http://localhost:5000/api/v1
-//      -> fallback mulus ke dataset lokal jika backend sedang proses startup
+// Todo:
+// -> Read backend data with explicit sample fallbacks and submit report actions.
 
+// --- API requests ---
 import {
   PlotFeatureCollection,
   ImpactLedgerData,
@@ -17,7 +16,9 @@ import type { DataResult, HotspotResult, HotspotAvailability, HotspotTimeRange, 
 
 import { API_BASE_URL, requestApi, ApiError } from "./http";
 
-// helper fetch dengan batas waktu dan fallback -----------------------------------
+// Purpose: Read backend data and keep its origin visible to callers.
+// Input: URL, request options, and sample data.
+// Output: Data with a service/sample origin and fetch status.
 async function readWithFallback<T>(
   url: string,
   options: RequestInit = {},
@@ -42,7 +43,6 @@ async function readWithFallback<T>(
     if (json.data == null) throw new Error("Data unavailable");
     return { data: json.data as T, origin: "service", fetched_at: new Date().toISOString(), failed: false };
   } catch {
-    // jika backend belum aktif atau network terputus, gunakan data fallback
     return { data: fallbackData, origin: "sample", fetched_at: null, failed: true };
   }
 }
@@ -80,9 +80,6 @@ export async function getHotspotAvailabilityApi(signal:AbortSignal):Promise<Hots
   return json.data;
 }
 
-// end of helper fetch -------------------------------------------------------------
-
-// api petak spasial ---------------------------------------------------------------
 export async function getPlotsApi(region = "all", status = "all"): Promise<PlotFeatureCollection> {
   const params = new URLSearchParams();
   if (region !== "all") params.append("region", region);
@@ -92,7 +89,7 @@ export async function getPlotsApi(region = "all", status = "all"): Promise<PlotF
   return fetchWithFallback<PlotFeatureCollection>(url, {}, mockPlotsData);
 }
 
-// The existing timeline endpoint expects a plot code in its plot_id parameter.
+// The timeline API calls this plot_id, but expects the plot code.
 export async function getRecoveryHistoryApi(plotCode: string, signal: AbortSignal, page = 1): Promise<{ items: TimelineItem[]; hasMore: boolean }> {
   const response = await fetch(`${API_BASE_URL}/timeline?${new URLSearchParams({ plot_id: plotCode, page: String(page), limit: "20" })}`, {
     credentials: "include",
@@ -105,19 +102,16 @@ export async function getRecoveryHistoryApi(plotCode: string, signal: AbortSigna
   return { items: json.data.items, hasMore: json.data.pagination?.has_next === true };
 }
 
-// api metrik impact ledger --------------------------------------------------------
 export async function getImpactLedgerApi(): Promise<ImpactLedgerData> {
   const url = `${API_BASE_URL}/metrics/impact-ledger`;
   return fetchWithFallback<ImpactLedgerData>(url, {}, mockImpactData);
 }
 
-// api bnpb karhutla ---------------------------------------------------------------
 export async function getBnpbKarhutlaApi(): Promise<BnpbSyncData> {
   const url = `${API_BASE_URL}/external/bnpb-karhutla`;
   return fetchWithFallback<BnpbSyncData>(url, {}, mockBnpbData);
 }
 
-// api linimasa relawan ------------------------------------------------------------
 export async function getTimelineApi(plotId = "all"): Promise<TimelineItem[]> {
   const params = new URLSearchParams();
   if (plotId !== "all") params.append("plot_id", plotId);
@@ -131,7 +125,6 @@ export async function getTimelineApi(plotId = "all"): Promise<TimelineItem[]> {
   return result.items || mockTimelineData;
 }
 
-// api upvote verifikasi warga ----------------------------------------------------
 export async function verifyTimelineApi(
   logId: string,
   type: "subur" | "dispute" = "subur"
@@ -153,7 +146,6 @@ export async function verifyTimelineApi(
   return { confirmed_subur_count: 43, user_has_verified: true };
 }
 
-// api tambah komentar warga ------------------------------------------------------
 export async function addCommentApi(
   logId: string,
   authorName: string,
@@ -173,7 +165,6 @@ export async function addCommentApi(
   }
 }
 
-// api pengiriman laporan pohon ----------------------------------------------------
 export interface SubmitReportPayload {
   plot_id: string;
   tree_condition: "subur" | "perlu_rawat" | "mati";
@@ -207,7 +198,7 @@ export async function getWindApi(signal:AbortSignal):Promise<WindResult> {
   return json.data;
 }
 
-// Read official station data through the backend; upstream authorization stays private.
+// Keep the station provider token on the backend.
 export async function getIspuApi(signal:AbortSignal):Promise<import("@/types/air-quality").IspuResult> {
   const response=await fetch(`${API_BASE_URL}/external/ispu`,{signal});
   if(!response.ok)throw new Error("ISPU unavailable");
@@ -222,3 +213,4 @@ export async function getIspuDetailApi(id:string,signal:AbortSignal):Promise<imp
   if(json.data?.station?.id!==id||!Array.isArray(json.data?.pollutants))throw new Error("ISPU unavailable");
   return json.data;
 }
+// --- end of API requests ---

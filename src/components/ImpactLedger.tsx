@@ -1,8 +1,7 @@
-// src/components/ImpactLedger.tsx
-// -> ringkasan metrik pemulihan dalam satu kalimat (pengganti 4 kartu metrik)
-//      -> bibit hidup dari total bibit ditanam, termasuk yang mati tetap dicatat
-//      -> stempel tingkat hidup dan baris konteks luas lahan, petak, kelompok tani
+// Todo:
+// -> Show restoration totals from the supplied data.
 
+// --- Restoration metrics ---
 import React from "react";
 import { ImpactLedgerData } from "@/types";
 import { formatId } from "@/utils/plotDisplay";
@@ -26,3 +25,4 @@ export const ImpactLedger: React.FC<ImpactLedgerProps> = ({ data }) => {
     </section>
   );
 };
+// --- end of Restoration metrics ---

@@ -1,10 +1,7 @@
-// src/utils/timeLapseService.ts
-// -> modul deret waktu 24 jam kilas balik karhutla
-//      -> penarik data cuaca per jam open-meteo hourly api
-//      -> sintesis variasi diurnal suhu, kelembapan, dan frp titik api
-//      -> generator frame waktu temporal untuk pemutar linimasa 60 fps
-// -> disini buat orkestrasi frame temporal peta
+// Todo:
+// -> Combine hourly weather with modeled smoke estimates for playback.
 
+// --- Time-lapse frames ---
 import { WindDirection } from "@/types";
 import { convertDegreeToCardinal } from "@/utils/weatherService";
 
@@ -29,14 +26,12 @@ interface TimeLapseCacheItem {
   expiresAt: number;
 }
 
-// penampung cache memori per koordinat (ttl 15 menit)
 const timeLapseCache = new Map<string, TimeLapseCacheItem>();
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-// helper --------------------------------------------------------------------------
-// function pembentuk deret waktu fallback berbasis model diurnal siklus 24 jam
-// input param : basePm25, baseAreaHa, now
-// output : array 25 TimeLapseFrame (-24 s.d. 0)
+// Purpose: Build illustrative frames when hourly weather is unavailable.
+// Input: Baseline PM2.5, area, and current time.
+// Output: 25 synthetic hourly frames from -24 through 0.
 function generateDiurnalFallbackFrames(
   basePm25: number,
   baseAreaHa: number,
@@ -48,23 +43,19 @@ function generateDiurnalFallbackFrames(
     const targetDate = new Date(now.getTime() + offset * 60 * 60 * 1000);
     const hour = targetDate.getHours();
 
-    // kurva diurnal: puncak siang (14:00), palung malam (04:00)
+    // The synthetic daily curve is lowest at 04:00 and highest at 16:00.
     const diurnalAngle = ((hour - 4) / 24) * 2 * Math.PI;
     const diurnalFactor = 0.5 * (1 - Math.cos(diurnalAngle)); // 0.0 di 04:00, 1.0 di 16:00
 
-    // kecepatan angin: 8 km/h malam s.d. 24 km/h siang
     const windSpeedKmh = Math.round(8 + diurnalFactor * 16);
-    // suhu: 24°C malam s.d. 34°C siang
     const temperatureC = Math.round(24 + diurnalFactor * 10);
-    // kelembapan relatif terbalik dengan suhu: 90% subuh s.d. 55% siang
     const relativeHumidity = Math.round(90 - diurnalFactor * 35);
 
-    // pergeseran arah angin bertahap (angin darat ke angin laut pesisir gambut)
+    // Vary the example wind direction; this does not model local coastal weather.
     const baseDeg = 315; // NW
     const windDirectionDeg = Math.round((baseDeg + Math.sin(diurnalAngle) * 45 + 360) % 360);
     const { cardinal, label_id } = convertDegreeToCardinal(windDirectionDeg);
 
-    // frp bara api & luas sebaran kabut
     const frpMultiplier = Number((0.45 + diurnalFactor * 0.9).toFixed(2));
     const estimatedPm25 = Math.round(basePm25 * (0.6 + diurnalFactor * 0.55));
     const estimatedAreaHa = Math.round(baseAreaHa * (0.75 + diurnalFactor * 0.35));
@@ -92,9 +83,10 @@ function generateDiurnalFallbackFrames(
 
   return frames;
 }
-// end of helper ------------------------------------------------------------------
 
-// penarik data deret waktu 24 jam terintegrasi open-meteo hourly api
+// Purpose: Build hourly frames; smoke and FRP remain modeled estimates.
+// Input: Coordinates and baseline smoke values.
+// Output: Frames for the previous 24 hours.
 export async function fetch24HourTimeLapse(
   lat: number,
   lng: number,
@@ -129,7 +121,6 @@ export async function fetch24HourTimeLapse(
       throw new Error("Data deret waktu tidak lengkap");
     }
 
-    // temukan indeks yang paling mendekati waktu saat ini
     const currentIsoHour = now.toISOString().slice(0, 13);
     let currentIndex = times.findIndex((t) => t.startsWith(currentIsoHour));
     if (currentIndex === -1) currentIndex = Math.min(24, times.length - 1);
@@ -150,7 +141,7 @@ export async function fetch24HourTimeLapse(
 
       const { cardinal, label_id } = convertDegreeToCardinal(windDirectionDeg);
 
-      // faktor intensitas bara berdasarkan siang-malam
+      // FRP and smoke vary by a fixed day/night rule, not historical satellite readings.
       const diurnalFactor = hour >= 11 && hour <= 16 ? 1.0 : (hour >= 20 || hour <= 6 ? 0.35 : 0.65);
       const frpMultiplier = Number((0.45 + diurnalFactor * 0.9).toFixed(2));
       const estimatedPm25 = Math.round(baseMetrics.basePm25 * (0.6 + diurnalFactor * 0.55));
@@ -193,3 +184,4 @@ export async function fetch24HourTimeLapse(
     return fallbackFrames;
   }
 }
+// --- end of Time-lapse frames ---

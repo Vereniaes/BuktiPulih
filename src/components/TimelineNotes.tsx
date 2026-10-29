@@ -1,9 +1,7 @@
-// src/components/TimelineNotes.tsx
-// -> catatan dari lapangan (kolase polaroid dengan titik status)
-//      -> foto kondisi terkini dengan sisipan foto awal tanam
-//      -> tombol interaksi konfirmasi warga (upvote anti-fraud)
-//      -> dialog pemberian catatan dukungan publik dan penyaringan sanitasi teks
+// Todo:
+// -> Show plot notes and send timeline confirmations and comments.
 
+// --- Timeline notes ---
 "use client";
 
 import React, { useState } from "react";
@@ -27,33 +25,29 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
 }) => {
   const [timelineItems, setTimelineItems] = useState<TimelineItem[]>(items);
 
-  // state dialog komentar ---------------------------------------------------------
   const [activeCommentLogId, setActiveCommentLogId] = useState<string | null>(null);
   const [authorName, setAuthorName] = useState("");
   const [authorBadge, setAuthorBadge] = useState<"donatur" | "warga_lokal" | "pemerhati">("donatur");
   const [commentContent, setCommentContent] = useState("");
   const [isSendingComment, setIsSendingComment] = useState(false);
 
-  // sinkronisasi jika props items berubah dari fetch backend -----------------------
   React.useEffect(() => {
     setTimelineItems(items);
   }, [items]);
 
-  // urut terbaru dulu, tanpa filter tampilkan NOTES_SHOWN catatan terakhir
+  // Limit the unfiltered view to the newest notes.
   const sortedItems = [...timelineItems].sort((a, b) => b.monitoring_date.localeCompare(a.monitoring_date));
   const filteredItems =
     selectedPlotFilter === "all"
       ? sortedItems.slice(0, NOTES_SHOWN)
       : sortedItems.filter((item) => item.plot_code === selectedPlotFilter);
 
-  // handler konfirmasi upvote warga -----------------------------------------------
   const handleToggleVerify = async (id: string) => {
     const targetItem = timelineItems.find((i) => i.id === id);
     if (!targetItem) return;
 
     const currentlyVerified = !!targetItem.community_verifications.user_has_verified;
 
-    // update optimis di ui --------------------------------------------------------
     setTimelineItems((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -72,12 +66,9 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
       })
     );
 
-    // kirim ke backend ------------------------------------------------------------
     await verifyTimelineApi(id, currentlyVerified ? "dispute" : "subur");
   };
-  // end of handler konfirmasi -----------------------------------------------------
 
-  // handler kirim catatan komentar warga ------------------------------------------
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCommentLogId || !commentContent.trim()) return;
@@ -103,7 +94,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
       setCommentContent("");
     }
   };
-  // end of handler kirim komentar -------------------------------------------------
 
   return (
     <section className="notes-section" aria-labelledby="notes-heading">
@@ -129,7 +119,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
               className="polaroid"
               style={{ "--tilt": `${idx % 2 === 0 ? -1 : 1.2}deg` } as React.CSSProperties}
             >
-              {/* foto terkini dengan sisipan foto awal -------------------------- */}
               <div className="polaroid-photo">
                 <img
                   src={item.images.current_photo_url}
@@ -141,7 +130,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
                   <figcaption>awal</figcaption>
                 </figure>
               </div>
-              {/* end of foto ------------------------------------------------------ */}
 
               <p className="polaroid-caption">
                 <span className="status-dot" style={{ backgroundColor: status.color }} />
@@ -156,7 +144,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
                 {status.label} · perkiraan hidup {formatId(item.tree_metrics.estimated_survival_rate, 2)}%
               </p>
 
-              {/* aksi konfirmasi warga dan catatan ------------------------------ */}
               <div className="polaroid-actions">
                 <button
                   type="button"
@@ -171,7 +158,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
                   {item.comment_count} catatan warga · tulis
                 </button>
               </div>
-              {/* end of aksi ------------------------------------------------------ */}
             </article>
           );
         })}
@@ -180,7 +166,6 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
           <p className="journal-empty">belum ada catatan lapangan untuk petak ini.</p>
         )}
       </div>
-      {/* modal input komentar warga -------------------------------------------- */}
       {activeCommentLogId && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-content-card" style={{ maxWidth: "480px" }}>
@@ -298,7 +283,7 @@ export const TimelineNotes: React.FC<TimelineNotesProps> = ({
           </div>
         </div>
       )}
-      {/* end of modal komentar ------------------------------------------------- */}
     </section>
   );
 };
+// --- end of Timeline notes ---

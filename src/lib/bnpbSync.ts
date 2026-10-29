@@ -1,23 +1,18 @@
-// this file handles fetching and caching real bnpb karhutla data
 // Todo:
-// -> pull 6 provinces from arcgis rest bnpb
-// -> merge with buktipulih restoration metrics
-// -> graceful fallback if bnpb is down
+// -> Refresh provincial BNPB totals and keep a process-local fallback.
 
+// --- BNPB sync ---
 import { BnpbSyncData, BnpbProvinceItem } from "@/types";
 import { mockBnpbData } from "@/data/bnpbData";
 
-// in-memory cache for synced bnpb data across server requests
 let cachedBnpbData: BnpbSyncData = { ...mockBnpbData };
 
-// endpoint bnpb arcgis rest
 const BNPB_QUERY_URL =
   "https://gis.bnpb.go.id/server/rest/services/2026_karhutla/mv_prov_karhutla_2026/MapServer/3/query?where=objectid>0&outFields=provinsi,tgl_update,today_luas_terbakar,total_hotspot,relawan,kualitas_udara_pm25&returnGeometry=false&f=json";
 
-// # helper sync bnpb ------------------------------------------------------------------
-// # function buat tarik data bnpb dan merge dengan metrik buktipulih
-// # input param : none
-// # output : payload json BnpbSyncData
+// Purpose: Refresh BNPB totals while keeping the existing restoration fallback.
+// Input: None.
+// Output: Snapshot and sync status; failed requests retain the previous snapshot.
 export async function syncBnpbData(): Promise<{
   success: boolean;
   data: BnpbSyncData;
@@ -45,13 +40,11 @@ export async function syncBnpbData(): Promise<{
       throw new Error("empty features from bnpb arcgis");
     }
 
-    // mapping 6 provinsi dan merge data buktipulih coverage
     const updatedProvinces: BnpbProvinceItem[] = features.map(
       (feat: { attributes: Record<string, unknown> }) => {
         const attr = feat.attributes || {};
         const provName = String(attr.provinsi || "").trim();
 
-        // cari fallback data coverage petak untuk provinsi ini
         const existingProv = mockBnpbData.provinces.find(
           (p) => p.provinsi.toLowerCase() === provName.toLowerCase()
         );
@@ -86,7 +79,7 @@ export async function syncBnpbData(): Promise<{
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "unknown sync error";
-    // gracefully retain existing cached data on network or waf failure
+    // Keep the last snapshot when BNPB or its WAF rejects the request.
     return {
       success: false,
       data: cachedBnpbData,
@@ -95,10 +88,7 @@ export async function syncBnpbData(): Promise<{
   }
 }
 
-// # function buat ambil data cache bnpb terkini tanpa memicu fetch eksternal
-// # input param : none
-// # output : payload json BnpbSyncData
 export function getCachedBnpbData(): BnpbSyncData {
   return cachedBnpbData;
 }
-// # end of helper ------------------------------------------------------------------
+// --- end of BNPB sync ---
