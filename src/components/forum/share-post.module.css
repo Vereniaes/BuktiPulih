@@ -1,0 +1,16 @@
+/* Keep sharing readable and easy to reach on phones. */
+.dialog { width: min(360px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 16px 20px 12px; overflow-y: auto; border: 1px solid var(--surface-border); border-radius: 16px; background: var(--surface-bg); color: var(--ink); }
+.dialog::backdrop { background: rgb(22 30 24 / 35%); }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.header h2 { font-size: 1.15rem; }
+.close { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; }
+.dialog svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.options { display: grid; }
+.options a, .options button { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 48px; padding: 10px 8px; border-bottom: 1px solid var(--surface-border); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; text-align: left; }
+.options a:hover, .options button:hover, .close:hover { background: var(--surface-muted); }
+.dialog :is(a, button, input):focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.url { width: 100%; min-height: 44px; margin-top: 16px; padding: 10px; border: 1px solid var(--surface-border); border-radius: 6px; background: var(--surface-card); color: #5e625a; font-size: 16px; }
+.status { min-height: 20px; margin-top: 8px; color: #4e554d; font-size: 12px; }
+@media (max-width: 520px) {
+  .dialog { width: 100%; max-width: none; max-height: calc(100dvh - 24px); margin: auto 0 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; }
+}

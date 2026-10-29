@@ -8,6 +8,8 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getForumPostById, getAllForumPostIds } from "@/data/forumPostsData";
 import { ForumPostDetailClient } from "@/components/ForumPostDetailClient";
+import { ForumRemotePost } from "@/components/forum/ForumRemotePost";
+import { PageMotion } from "@/components/PageMotion";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,13 +24,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getForumPostById(id);
 
   if (!post) {
-    return {
+    return /^[a-f0-9]{24}$/i.test(id) ? {
+      title: "Catatan Ruang Suara Hijau",
+      description: "Catatan lapangan masyarakat di Ruang Suara Hijau.",
+      alternates: { canonical: `https://buktipulih.id/forum/${id}` },
+    } : {
       title: "Catatan Tidak Ditemukan — BuktiPulih",
       description: "Catatan partisipasi lapangan tidak ditemukan atau telah diarsipkan.",
     };
   }
 
-  const title = `${post.author.username} di ${post.location_name} — Forum Pulih`;
+  const title = `${post.author.username} di ${post.location_name} — Ruang Suara Hijau`;
   const description = `${post.caption.slice(0, 155)}...`;
   const mediaUrl = post.media.url || "/journal/pl-kalbar-001/m6.jpg";
 
@@ -73,6 +79,7 @@ export default async function ForumDetailPage({ params }: PageProps) {
   const post = getForumPostById(id);
 
   if (!post) {
+    if (/^[a-f0-9]{24}$/i.test(id)) return <PageMotion key={id} className="container" style={{ paddingTop: "20px", paddingBottom: "72px" }}><ForumRemotePost key={id} id={id} /></PageMotion>;
     notFound();
   }
 
@@ -104,12 +111,12 @@ export default async function ForumDetailPage({ params }: PageProps) {
   };
 
   return (
-    <main className="container" style={{ paddingTop: "20px", paddingBottom: "72px" }}>
+    <PageMotion key={id} className="container" style={{ paddingTop: "20px", paddingBottom: "72px" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(postStructuredData) }}
       />
       <ForumPostDetailClient post={post} />
-    </main>
+    </PageMotion>
   );
 }

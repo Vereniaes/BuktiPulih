@@ -120,6 +120,9 @@ export interface BnpbSyncData {
 
 // model profil warga ringan untuk komentar & posting ------------------------------
 export interface UserProfileLight {
+  user_id?: string;
+  avatar_url?: string | null;
+  participation?: "affected" | "volunteer" | "observer" | null;
   username: string;
   age: number;
   city: string;
@@ -158,9 +161,18 @@ export interface ComparativeMedia {
 
 // model postingan forum partisipasi tumblr-style ----------------------------------
 export interface ForumPost {
+  persisted?: boolean;
+  location?: { type: "Point"; coordinates: [number, number] };
+  ecosystem_type?: EcosystemType;
+  condition?: TreeStatus;
+  verification_status?: "unverified";
+  is_anonymous?: boolean;
   id: string;
   author: UserProfileLight;
   location_name: string;
+  province?: string;
+  city?: string;
+  place_detail?: string;
   region_key: "kalbar" | "kalteng" | "bekasi" | "riau" | "sumsel" | "kalsel" | "jambi" | "lainnya";
   created_at: string;
   time_ago: string;
@@ -229,3 +241,11 @@ export interface LiveWeatherData {
 
 
 
+
+export interface RecoveryReport extends ForumPost {
+  location: { type: "Point"; coordinates: [number, number] };
+  ecosystem_type: EcosystemType;
+  condition: TreeStatus;
+  verification_status: "unverified";
+}
+export type EvidenceSubmission = Pick<RecoveryReport, "location_name" | "region_key" | "caption" | "media" | "location" | "ecosystem_type" | "condition" | "province" | "city" | "place_detail"> & { submission_id: string; is_anonymous: boolean };

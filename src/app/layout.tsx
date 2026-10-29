@@ -1,37 +1,38 @@
 // src/app/layout.tsx
 // -> tata letak root aplikasi buktipulih
 //      -> import globals.css dengan design tokens
-//      -> integrasi font sans Manrope dan aksen tulisan tangan Mansalva
+//      -> integrasi font Plus Jakarta Sans
 //      -> metadata seo, opengraph whatsapp/twitter, dan structured data schema.org
 
 import type { Metadata } from "next";
 import "./globals.css";
+import { AccountProvider } from "@/components/account/AccountSession";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://buktipulih.id"),
   title: {
-    default: "BuktiPulih — Akuntabilitas Pemulihan Pasca-Karhutla & WebGIS Satelit BNPB",
+    default: "BuktiPulih — Pantau Jejak, Kawal Pemulihan",
     template: "%s | BuktiPulih",
   },
   description:
-    "Platform pemantauan karhutla berbasis satelit BNPB ArcGIS dan audit foto perkembangan pohon di lahan gambut bekas terbakar oleh kader lapangan.",
+    "Platform pemantauan karhutla dan akuntabilitas pemulihan lahan gambut pasca-bencana bersama warga. Pantau Jejak, Kawal Pemulihan.",
   keywords: [
     "buktipulih",
+    "pantau jejak kawal pemulihan",
     "restorasi gambut",
     "karhutla bnpb",
     "sekat kanal",
     "pemulihan lahan",
-    "catatan relawan",
-    "nasa modis",
-    "noaa viirs",
+    "bukti warga",
+    "bupi rimbawan",
   ],
   alternates: {
     canonical: "https://buktipulih.id",
   },
   openGraph: {
-    title: "BuktiPulih — Akuntabilitas Pemulihan Pasca-Karhutla & WebGIS Satelit BNPB",
+    title: "BuktiPulih — Pantau Jejak, Kawal Pemulihan",
     description:
-      "Platform pemantauan karhutla berbasis satelit BNPB ArcGIS dan audit foto perkembangan pohon di lahan gambut bekas terbakar oleh kader lapangan.",
+      "Platform pemantauan karhutla dan akuntabilitas pemulihan lahan gambut pasca-bencana bersama warga. Pantau Jejak, Kawal Pemulihan.",
     type: "website",
     url: "https://buktipulih.id",
     siteName: "BuktiPulih",
@@ -39,9 +40,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BuktiPulih — Akuntabilitas Pemulihan Pasca-Karhutla & WebGIS Satelit BNPB",
+    title: "BuktiPulih — Pantau Jejak, Kawal Pemulihan",
     description:
-      "Platform pemantauan karhutla berbasis satelit BNPB ArcGIS dan audit foto perkembangan pohon di lahan gambut bekas terbakar.",
+      "Platform pemantauan karhutla dan akuntabilitas pemulihan lahan gambut pasca-bencana bersama warga.",
   },
   robots: {
     index: true,
@@ -64,7 +65,7 @@ const rootStructuredData = {
   applicationCategory: "EnvironmentalApplication",
   operatingSystem: "All",
   description:
-    "Platform Akuntabilitas Pemulihan Lahan Gambut & Pemantauan Karhutla Berbasis Satelit BNPB ArcGIS",
+    "Platform Akuntabilitas Pemulihan Lahan Gambut & Pemantauan Karhutla Berbasis Satelit BNPB ArcGIS. Pantau Jejak, Kawal Pemulihan.",
   offers: {
     "@type": "Offer",
     price: "0",
@@ -83,12 +84,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
+    <html lang="id" data-theme="light" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Mansalva&family=Manrope:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
         <script
@@ -96,7 +97,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(rootStructuredData) }}
         />
       </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning><AccountProvider>{children}</AccountProvider></body>
     </html>
   );
 }

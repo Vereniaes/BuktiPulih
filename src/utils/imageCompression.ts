@@ -16,7 +16,8 @@ export interface CompressionResult {
 export const compressImageClient = (
   file: File,
   maxWidth = 1280,
-  quality = 0.82
+  quality = 0.82,
+  maxHeight = Infinity
 ): Promise<CompressionResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -28,10 +29,9 @@ export const compressImageClient = (
         let height = img.height;
 
         // kalkulasi rasio aspek ---------------------------------------------------
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
+        const scale = Math.min(1, maxWidth / width, maxHeight / height);
+        width = Math.max(1, Math.round(width * scale));
+        height = Math.max(1, Math.round(height * scale));
 
         const canvas = document.createElement("canvas");
         canvas.width = width;

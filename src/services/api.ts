@@ -13,10 +13,9 @@ import { mockPlotsData } from "@/data/plotsData";
 import { mockImpactData } from "@/data/impactData";
 import { mockTimelineData } from "@/data/timelineData";
 import { mockBnpbData } from "@/data/bnpbData";
-import type { DataResult, HotspotResult, MapBounds } from "@/types/environment";
+import type { DataResult, HotspotResult, HotspotAvailability, HotspotTimeRange, MapBounds } from "@/types/environment";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+import { API_BASE_URL, requestApi, ApiError } from "./http";
 
 // helper fetch dengan batas waktu dan fallback -----------------------------------
 async function readWithFallback<T>(
@@ -60,15 +59,27 @@ export async function getHomepageDataApi() {
   return { plots, bnpb };
 }
 
-export async function getHotspotsApi(bounds: MapBounds, signal: AbortSignal): Promise<HotspotResult> {
-  const response = await fetch(`${API_BASE_URL}/external/hotspots?${new URLSearchParams({ bbox: bounds.join(",") })}`, {
-    signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
+export async function getHotspotsApi(bounds: MapBounds, signal: AbortSignal, hours: 6 | 12 | 24 | 72 = 24, range?:HotspotTimeRange|null): Promise<HotspotResult> {
+  const params=new URLSearchParams({bbox:bounds.join(",")});
+  if(range) { params.set("start",new Date(range.start).toISOString());params.set("end",new Date(range.end).toISOString()); }
+  else params.set("hours",String(hours));
+  const response = await fetch(`${API_BASE_URL}/external/hotspots?${params}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(range?45000:15000)]),
   });
-  if (!response.ok) throw new Error("Data titik panas belum tersedia.");
   const json = await response.json();
+  if (!response.ok) throw new ApiError(response.status,json.error?.code||"FIRMS_UNAVAILABLE",json.error?.message||"Data titik panas belum tersedia.");
   if (!Array.isArray(json.data?.observations)) throw new Error("Data titik panas belum tersedia.");
   return json.data;
 }
+
+export async function getHotspotAvailabilityApi(signal:AbortSignal):Promise<HotspotAvailability> {
+  const response=await fetch(`${API_BASE_URL}/external/hotspots/availability`,{signal:AbortSignal.any([signal,AbortSignal.timeout(20000)])});
+  if(!response.ok)throw new Error("Tanggal data NASA belum tersedia.");
+  const json=await response.json();
+  if(!Array.isArray(json.data?.sources)||!json.data.sources.length)throw new Error("Tanggal data NASA belum tersedia.");
+  return json.data;
+}
+
 // end of helper fetch -------------------------------------------------------------
 
 // api petak spasial ---------------------------------------------------------------
@@ -79,6 +90,19 @@ export async function getPlotsApi(region = "all", status = "all"): Promise<PlotF
 
   const url = `${API_BASE_URL}/plots?${params.toString()}`;
   return fetchWithFallback<PlotFeatureCollection>(url, {}, mockPlotsData);
+}
+
+// The existing timeline endpoint expects a plot code in its plot_id parameter.
+export async function getRecoveryHistoryApi(plotCode: string, signal: AbortSignal, page = 1): Promise<{ items: TimelineItem[]; hasMore: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/timeline?${new URLSearchParams({ plot_id: plotCode, page: String(page), limit: "20" })}`, {
+    credentials: "include",
+    signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error("History unavailable");
+  const json = await response.json();
+  if (!Array.isArray(json.data?.items)) throw new Error("History unavailable");
+  return { items: json.data.items, hasMore: json.data.pagination?.has_next === true };
 }
 
 // api metrik impact ledger --------------------------------------------------------
@@ -166,69 +190,35 @@ export async function submitReportApi(payload: SubmitReportPayload): Promise<{
   message: string;
 }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/reports`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "include",
-    });
-    if (res.ok) {
-      const json = await res.json();
-      return { success: true, message: json.data?.message || "Laporan berhasil disimpan!" };
-    }
-  } catch (err) {
-    console.warn("[API] Gagal mengirim laporan ke backend:", err);
-  }
-  // jika offline, simpan draft lokal
-  return {
-    success: true,
-    message: "Laporan tersimpan di memori perangkat. Akan disinkronkan saat ada jaringan.",
-  };
-}
-
-// api login sesi kader -----------------------------------------------------------
-export async function loginKaderApi(
-  phoneNumber: string,
-  pin: string
-): Promise<{ success: boolean; user?: Record<string, unknown>; message: string }> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone_number: phoneNumber, pin }),
-      credentials: "include",
-    });
-    const json = await res.json();
-    if (res.ok) {
-      return { success: true, user: json.data?.user, message: json.data?.message || "Berhasil masuk!" };
-    }
-    return { success: false, message: json.error?.message || "Nomor atau PIN salah." };
-  } catch {
-    // fallback testing offline mode jika backend belum terhubung
-    if (pin === "123456") {
-      return {
-        success: true,
-        user: {
-          full_name: "Pak Suwardi",
-          phone_number: phoneNumber,
-          role_badge: "🌿 Kader Terdaftar ✓",
-          organization_name: "Kelompok Tani Peduli Gambut Kubu Raya",
-        },
-        message: "Selamat datang kembali, Pak Suwardi!",
-      };
-    }
-    return { success: false, message: "PIN yang dimasukkan keliru." };
+    const result = await requestApi<{ message: string }>("/reports", { method: "POST", body: JSON.stringify(payload) });
+    return { success: true, message: result.message };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : "Laporan belum tersimpan. Coba lagi." };
   }
 }
 
-// api logout sesi kader ----------------------------------------------------------
-export async function logoutKaderApi(): Promise<void> {
-  try {
-    await fetch(`${API_BASE_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch {
-    // noop
-  }
+export interface WindPoint { id:string; coordinates:[number,number]; speed_kmh:number; direction_deg:number; observed_at:string }
+export interface WindResult { points:WindPoint[]; fetched_at:string; source:string; status:"ready"|"cached" }
+export async function getWindApi(signal:AbortSignal):Promise<WindResult> {
+  const response=await fetch(`${API_BASE_URL}/external/wind`,{signal});
+  if (!response.ok) throw new Error("Wind unavailable");
+  const json=await response.json();
+  if (!Array.isArray(json.data?.points)) throw new Error("Wind unavailable");
+  return json.data;
+}
+
+// Read official station data through the backend; upstream authorization stays private.
+export async function getIspuApi(signal:AbortSignal):Promise<import("@/types/air-quality").IspuResult> {
+  const response=await fetch(`${API_BASE_URL}/external/ispu`,{signal});
+  if(!response.ok)throw new Error("ISPU unavailable");
+  const json=await response.json();
+  if(!Array.isArray(json.data?.stations))throw new Error("ISPU unavailable");
+  return json.data;
+}
+export async function getIspuDetailApi(id:string,signal:AbortSignal):Promise<import("@/types/air-quality").IspuDetail> {
+  const response=await fetch(`${API_BASE_URL}/external/ispu/${encodeURIComponent(id)}`,{signal});
+  if(!response.ok)throw new Error("ISPU unavailable");
+  const json=await response.json();
+  if(json.data?.station?.id!==id||!Array.isArray(json.data?.pollutants))throw new Error("ISPU unavailable");
+  return json.data;
 }

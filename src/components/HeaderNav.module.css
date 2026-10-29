@@ -1,0 +1,160 @@
+/* Keep the desktop portal header unchanged and scope the mobile disclosure panel. */
+.header { position: sticky; top: 0; z-index: 1100; }
+.menuPanel { display: contents; }
+.mobileReport { display: none; }
+.accountLink { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
+.header .accountAvatar { width: 24px; font-size: 10px; }
+.menuToggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--surface-border, #e2dac8);
+  border-radius: 12px;
+  background: var(--surface-card, #fff);
+  color: var(--forest-green-800, #0a572b);
+  cursor: pointer;
+}
+.menuToggle svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+.menuToggle:focus-visible {
+  outline: 3px solid #b7ddc3;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  .header :global(.portal-header-inner) {
+    min-height: 64px;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 8px 16px;
+  }
+  .menuToggle { display: grid; }
+  .menuPanel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 2;
+    display: none;
+    max-height: calc(100dvh - 65px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 16px 16px;
+    border-bottom: 1px solid var(--surface-border, #e2dac8);
+    background: var(--surface-bg, #f6f1e7);
+    box-shadow: 0 12px 24px rgb(23 48 31 / 12%);
+  }
+  .menuPanel[data-open="true"] {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: reveal .14s ease-out;
+  }
+  .desktopReport { display: none; }
+  .mobileReport {
+    position: fixed;
+    right: calc(18px + env(safe-area-inset-right, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 1;
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--forest-green-700, #0e753b);
+    box-shadow: 0 4px 14px rgb(10 55 30 / 25%);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 750;
+    cursor: pointer;
+  }
+  .mobileReport:focus-visible { outline: 3px solid #b7ddc3; outline-offset: 3px; }
+  .mobileReport svg { flex: 0 0 auto; }
+  .header[data-active-tab="fire"] .mobileReport,
+  .header[data-active-tab="recovery"] .mobileReport {
+    bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+  }
+  .menuPanel :global(.portal-tabs) {
+    order: 0;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    white-space: normal;
+  }
+  .menuPanel :global(.portal-tabs) button {
+    min-height: 48px;
+    flex-shrink: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: left;
+    white-space: normal;
+  }
+  .menuPanel :global(.portal-actions) {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0;
+  }
+  .menuPanel :global(.portal-actions) :global(.btn-lang-toggle),
+  .menuPanel :global(.portal-actions) :global(.portal-account) {
+    min-height: 44px;
+    justify-content: flex-start;
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: 14px;
+    text-align: left;
+  }
+  .menuPanel :global(.portal-actions) :global(.portal-account) { background: var(--surface-card, #fff); }
+  .menuPanel :global(.portal-actions) :global(.btn-report-primary) {
+    width: 100%;
+    min-height: 48px;
+    grid-column: 1 / -1;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .menuPanel :global(.portal-sync) {
+    min-height: 44px;
+    align-self: stretch;
+  }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menuPanel[data-open="true"] { animation: none; }
+}
+
+@media (max-width: 1100px) {
+  :global(body):has(:global(#recovery-filters)) .mobileReport { visibility:hidden; pointer-events:none; }
+}
+
+@media (max-width:860px) {
+  :global(body):has(:global(#hotspot-time-range)) .mobileReport { visibility:hidden; pointer-events:none; }
+}

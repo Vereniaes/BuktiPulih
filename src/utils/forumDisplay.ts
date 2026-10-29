@@ -2,16 +2,19 @@
 import type { ForumPost } from "@/types";
 import { REGION_TABS } from "./plotDisplay";
 
+export const FORUM_PAGE_SIZE = 25;
+
 export type SortCriteria = "latest" | "likes" | "comments" | "views";
 
 // helper --------------------------------------------------------------------------
 // function buat menyaring dan mengurutkan postingan forum
-// input param : list posts, filterWilayah, filterKondisi, sortKey
+// input param : posts, regionFilter, sortKey, query
 // output : ForumPost[] yang sudah diurutkan
 export function getSortedPosts(
   posts: ForumPost[],
   regionFilter: string,
-  sortKey: SortCriteria
+  sortKey: SortCriteria,
+  query = ""
 ): ForumPost[] {
   let result = [...posts];
 
@@ -24,6 +27,14 @@ export function getSortedPosts(
         (targetProvince && p.location_name.toLowerCase().includes(targetProvince)) ||
         p.location_name.toLowerCase().includes(regionFilter.toLowerCase())
     );
+  }
+
+  const terms = query.trim().toLocaleLowerCase("id-ID").split(/\s+/).filter(Boolean);
+  if (terms.length) {
+    result = result.filter(post => {
+      const text = [post.author.username, post.author.city, post.location_name, post.caption].join(" ").toLocaleLowerCase("id-ID");
+      return terms.every(term => text.includes(term));
+    });
   }
 
   if (sortKey === "latest") {

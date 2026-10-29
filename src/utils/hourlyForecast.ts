@@ -47,8 +47,9 @@ export async function fetchHourlyForecast(
   try { return await job; } finally { pending.delete(url); }
 }
 
+const wibTime = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
+});
 export function formatTimeWib(value: string | number): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
-  }).format(new Date(value)) + " WIB";
+  return wibTime.format(new Date(value)) + " WIB";
 }

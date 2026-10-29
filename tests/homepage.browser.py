@@ -80,19 +80,17 @@ async def main():
         await page.get_by_text("Lihat angka per jam",exact=True).click()
         for width in [320,360,390,768,1440]:
             await page.set_viewport_size({"width":width,"height":844 if width<1000 else 1000})
-            for theme in ["light","dark"]:
-                if await page.locator('html').get_attribute('data-theme') != theme:
-                    await page.get_by_role('button',name='Gunakan tema '+('gelap' if theme=='dark' else 'terang')).click()
-                await page.wait_for_timeout(100)
-                actual=await page.evaluate("document.documentElement.scrollWidth")
-                assert actual==width,(width,theme,actual)
-                controls=await page.locator('.portal-tabs button').evaluate_all("els=>els.map(e=>e.getBoundingClientRect().height)")
-                assert min(controls)>=44,controls
-                zoom=await page.locator('.leaflet-control-zoom a').first.bounding_box()
-                assert zoom['width']>=44 and zoom['height']>=44,zoom
-                await page.evaluate('window.scrollTo(0,0)')
-                await page.screenshot(path=str(OUTPUT/f"home-{width}-{theme}.png"),full_page=width in [390,1440])
-                results.append(f"layout {width} {theme}")
+            theme = "light"
+            await page.wait_for_timeout(100)
+            actual=await page.evaluate("document.documentElement.scrollWidth")
+            assert actual==width,(width,theme,actual)
+            controls=await page.locator('.portal-tabs button').evaluate_all("els=>els.map(e=>e.getBoundingClientRect().height)")
+            assert min(controls)>=44,controls
+            zoom=await page.locator('.leaflet-control-zoom a').first.bounding_box()
+            assert zoom['width']>=44 and zoom['height']>=44,zoom
+            await page.evaluate('window.scrollTo(0,0)')
+            await page.screenshot(path=str(OUTPUT/f"home-{width}-{theme}.png"),full_page=width in [390,1440])
+            results.append(f"layout {width} {theme}")
         await page.set_viewport_size({"width":390,"height":844})
         await page.wait_for_timeout(500)
         def center():

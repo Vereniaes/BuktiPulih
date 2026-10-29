@@ -46,6 +46,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   canvas.height = 1800;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Gagal menginisialisasi 2D canvas");
+  const fontFamily = getComputedStyle(document.body).fontFamily;
 
   // latar belakang kertas dokumen resmi
   ctx.fillStyle = "#FFFFFF";
@@ -62,11 +63,11 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
 
   // 1. KOP SURAT RESMI POSKO --------------------------------------------------------
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 22px sans-serif";
+  ctx.font = `bold 22px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.fillText("KONSORSIUM RESTORASI BUKTIPULIH & SATGAS PENANGGULANGAN KARHUTLA", 600, 75);
 
-  ctx.font = "14px sans-serif";
+  ctx.font = `14px ${fontFamily}`;
   ctx.fillStyle = "#475569";
   ctx.fillText("POSKO DARURAT MONITORING GEOSPASIAL & SEBARAN KABUT ASAP LAHAN GAMBUT", 600, 102);
   ctx.fillText("Sekretariat Bersama Pengendalian Karhutla & Restorasi Ekosistem Indonesia", 600, 122);
@@ -87,12 +88,12 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
 
   // 2. JUDUL LEMBAR DISPOSISI & METADATA -------------------------------------------
   ctx.fillStyle = "#0E753B";
-  ctx.font = "bold 20px sans-serif";
+  ctx.font = `bold 20px ${fontFamily}`;
   ctx.fillText("LEMBAR DISPOSISI SITUASI LAPANGAN & SEBARAN ASAP", 600, 185);
 
   ctx.textAlign = "left";
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 13px sans-serif";
+  ctx.font = `bold 13px ${fontFamily}`;
   ctx.fillText(`Nomor Dokumen : ${params.docNumber}`, 60, 220);
   ctx.fillText(`Waktu Terbit  : ${params.generatedAt}`, 60, 240);
 
@@ -122,15 +123,15 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
 
     ctx.textAlign = "left";
     ctx.fillStyle = "#64748B";
-    ctx.font = "bold 10.5px sans-serif";
+    ctx.font = `bold 10.5px ${fontFamily}`;
     ctx.fillText(kpi.title, x + 12, kpiBoxY + 22);
 
     ctx.fillStyle = kpi.color;
-    ctx.font = "bold 18px sans-serif";
+    ctx.font = `bold 18px ${fontFamily}`;
     ctx.fillText(kpi.val, x + 12, kpiBoxY + 50);
 
     ctx.fillStyle = "#64748B";
-    ctx.font = "11px sans-serif";
+    ctx.font = `11px ${fontFamily}`;
     ctx.fillText(kpi.sub, x + 12, kpiBoxY + 70);
   });
 
@@ -138,7 +139,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   const mapBoxY = 370;
   const mapBoxH = 270;
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 14px sans-serif";
+  ctx.font = `bold 14px ${fontFamily}`;
   ctx.fillText("1. SKETSA VISUAL SEBARAN KABUT ASAP & DISPERSI VEKTOR ANGIN", 60, mapBoxY);
 
   // kontainer peta
@@ -190,7 +191,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
 
     // label nama kabupaten & sensor
     ctx.fillStyle = "#F8FAFC";
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = `bold 11px ${fontFamily}`;
     const sensorLabel = spot.satellite_sensor?.includes("VIIRS") ? "VIIRS" : "MODIS";
     ctx.fillText(`${spot.kabupaten} [${sensorLabel}] (${spot.pm25_index} µg)`, px + 12, py + 4);
   });
@@ -201,7 +202,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.fillStyle = "#DC2626";
   ctx.fillRect(88, mapCanvasY + mapBoxH - 32, 10, 10);
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "11px sans-serif";
+  ctx.font = `11px ${fontFamily}`;
   ctx.fillText("Api Membara", 106, mapCanvasY + mapBoxH - 23);
 
   ctx.fillStyle = "#059669";
@@ -217,7 +218,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   // 5. TABEL RINCIAN KABUPATEN & STATUS SENSOR SATELIT ----------------------------
   const tableY = mapCanvasY + mapBoxH + 28;
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 14px sans-serif";
+  ctx.font = `bold 14px ${fontFamily}`;
   ctx.fillText("2. RINCIAN TITIK RAWAN, DETEKSI SENSOR & TINDAKAN SATGAS", 60, tableY);
 
   const tHeaderY = tableY + 12;
@@ -225,7 +226,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.fillRect(60, tHeaderY, 1080, 30);
 
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 11px sans-serif";
+  ctx.font = `bold 11px ${fontFamily}`;
   ctx.fillText("NO", 75, tHeaderY + 20);
   ctx.fillText("KABUPATEN / WILAYAH", 110, tHeaderY + 20);
   ctx.fillText("PROVINSI", 300, tHeaderY + 20);
@@ -242,11 +243,11 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     ctx.strokeRect(60, currentY, 1080, 26);
 
     ctx.fillStyle = "#0F172A";
-    ctx.font = "11px sans-serif";
+    ctx.font = `11px ${fontFamily}`;
     ctx.fillText(`${idx + 1}`, 75, currentY + 17);
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = `bold 11px ${fontFamily}`;
     ctx.fillText(spot.kabupaten, 110, currentY + 17);
-    ctx.font = "11px sans-serif";
+    ctx.font = `11px ${fontFamily}`;
     ctx.fillText(spot.provinsi, 300, currentY + 17);
 
     // sensor & confidence
@@ -255,16 +256,16 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     // status lapangan
     const isCooling = spot.status_kebakaran === "tahap pendinginan";
     ctx.fillStyle = isCooling ? "#059669" : "#DC2626";
-    ctx.font = "bold 10.5px sans-serif";
+    ctx.font = `bold 10.5px ${fontFamily}`;
     ctx.fillText(spot.ground_status || spot.status_kebakaran, 700, currentY + 17);
 
     ctx.fillStyle = "#0F172A";
-    ctx.font = "11px sans-serif";
+    ctx.font = `11px ${fontFamily}`;
     ctx.fillText(`${spot.pm25_index} µg`, 880, currentY + 17);
 
     // tindakan satgas
     ctx.fillStyle = isCooling ? "#059669" : "#0284C7";
-    ctx.font = "bold 10.5px sans-serif";
+    ctx.font = `bold 10.5px ${fontFamily}`;
     ctx.fillText(getActionText(spot), 970, currentY + 17);
 
     currentY += 26;
@@ -273,7 +274,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   // 6. LOG VERIFIKASI DARAT KADER LAPANGAN TERKINI --------------------------------
   const verifY = currentY + 24;
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 14px sans-serif";
+  ctx.font = `bold 14px ${fontFamily}`;
   ctx.fillText("3. LOG VERIFIKASI DARAT & PEMANTAUAN KADER LAPANGAN (TERKINI)", 60, verifY);
 
   const verifBoxY = verifY + 10;
@@ -289,24 +290,24 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
     vLogs.forEach((v, vIdx) => {
       const vy = verifBoxY + 22 + vIdx * 48;
       ctx.fillStyle = "#0E753B";
-      ctx.font = "bold 11.5px sans-serif";
+      ctx.font = `bold 11.5px ${fontFamily}`;
       ctx.fillText(`✓ [${v.verifier_name} — ${v.role_label}]`, 75, vy);
 
       ctx.fillStyle = "#334155";
-      ctx.font = "11px sans-serif";
+      ctx.font = `11px ${fontFamily}`;
       const snippet = v.notes.length > 110 ? v.notes.slice(0, 110) + "..." : v.notes;
       ctx.fillText(`"${snippet}"`, 75, vy + 18);
     });
   } else {
     ctx.fillStyle = "#475569";
-    ctx.font = "italic 11.5px sans-serif";
+    ctx.font = `italic 11.5px ${fontFamily}`;
     ctx.fillText("Belum ada log verifikasi darat tambahan hari ini. Menunggu laporan relawan regu patroli.", 75, verifBoxY + 30);
   }
 
   // 7. INSTRUKSI & DISPOSISI OPERASIONAL SATGAS ------------------------------------
   const notesY = verifBoxY + verifBoxH + 24;
   ctx.fillStyle = "#0F172A";
-  ctx.font = "bold 14px sans-serif";
+  ctx.font = `bold 14px ${fontFamily}`;
   ctx.fillText("4. INSTRUKSI OPERASIONAL KEDARURATAN (DISPOSISI SATGAS)", 60, notesY);
 
   const notesBoxY = notesY + 10;
@@ -318,7 +319,7 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   ctx.strokeRect(60, notesBoxY, 1080, notesBoxH);
 
   ctx.fillStyle = "#334155";
-  ctx.font = "11.5px sans-serif";
+  ctx.font = `11.5px ${fontFamily}`;
   const instructions = [
     "A. Kerahkan regu Manggala Agni dan Relawan Desa untuk membasahi sekat kanal gambut di sekeliling area pendinginan.",
     "B. Prioritaskan pembagian masker N95 & evakuasi kelompok rentan pada permukiman desa di jalur lintasan asap (downwind).",
@@ -333,19 +334,19 @@ export function renderDispatchSheetCanvas(params: DispatchExportParams): HTMLCan
   const signY = notesBoxY + notesBoxH + 30;
   ctx.textAlign = "left";
   ctx.fillStyle = "#475569";
-  ctx.font = "11px sans-serif";
+  ctx.font = `11px ${fontFamily}`;
   ctx.fillText("Dokumen ini dihasilkan secara otomatis oleh Subsistem Pemantauan Karhutla BuktiPulih.", 60, signY + 30);
   ctx.fillText("Data tersinkronisasi dengan WebGIS BNPB ArcGIS & sensor satelit termal NASA MODIS / NOAA VIIRS.", 60, signY + 48);
 
   ctx.textAlign = "center";
   ctx.fillStyle = "#0F172A";
-  ctx.font = "12px sans-serif";
+  ctx.font = `12px ${fontFamily}`;
   ctx.fillText("Posko Induk Pengendalian Karhutla,", 950, signY + 16);
   ctx.fillText("Komandan Satgas Operasi Siaga Darurat", 950, signY + 34);
 
-  ctx.font = "bold 12.5px sans-serif";
+  ctx.font = `bold 12.5px ${fontFamily}`;
   ctx.fillText("( IR. H. MANGGALA WAHYUDI, M.SC )", 950, signY + 105);
-  ctx.font = "11px sans-serif";
+  ctx.font = `11px ${fontFamily}`;
   ctx.fillStyle = "#64748B";
   ctx.fillText("NIP. 19780415 200312 1 002", 950, signY + 122);
 

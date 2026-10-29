@@ -14,7 +14,8 @@ export type RegionKey =
   | "sumsel"
   | "kalsel"
   | "jambi"
-  | "bekasi";
+  | "bekasi"
+  | "lainnya";
 
 // helper --------------------------------------------------------------------------
 // daftar tab wilayah beserta nama provinsi pada data petak
@@ -27,6 +28,7 @@ export const REGION_TABS: { key: RegionKey; label: string; province: string }[] 
   { key: "kalsel", label: "Kalsel (Banjarbaru)", province: "Kalimantan Selatan" },
   { key: "jambi", label: "Jambi (Muaro Jambi)", province: "Jambi" },
   { key: "bekasi", label: "Bekasi (Hutan Kota)", province: "Jawa Barat" },
+  { key: "lainnya", label: "Wilayah lain", province: "Wilayah lain" },
 ];
 
 // koordinat pusat tampilan peta per wilayah untuk navigasi flyTo presisi
@@ -38,6 +40,7 @@ export const REGION_COORDINATES: Record<RegionKey, { center: [number, number]; z
   sumsel: { center: [-3.35, 104.92], zoom: 9 },
   kalsel: { center: [-3.45, 114.83], zoom: 9 },
   jambi: { center: [-1.58, 103.75], zoom: 9 },
+  lainnya: { center: [-1.5, 112], zoom: 5 },
   bekasi: { center: [-6.23, 106.99], zoom: 11 },
 };
 
@@ -46,6 +49,7 @@ export const REGION_COORDINATES: Record<RegionKey, { center: [number, number]; z
 // output : boolean
 export function matchRegion(region: string, key: string): boolean {
   if (key === "all") return true;
+  if (key === "lainnya") return !REGION_TABS.some(tab => tab.key !== "all" && tab.key !== "lainnya" && region.toLowerCase().includes(tab.province.toLowerCase()));
   const tab = REGION_TABS.find((t) => t.key === key);
   return tab ? region.toLowerCase().includes(tab.province.toLowerCase()) : true;
 }

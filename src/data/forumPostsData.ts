@@ -121,7 +121,7 @@ export const initialForumPosts: ForumPost[] = [
       likes: 98,
       views: 640,
       comments_count: 3,
-      user_has_liked: true,
+      user_has_liked: false,
     },
     comments: [
       {
@@ -413,7 +413,7 @@ export const initialForumPosts: ForumPost[] = [
       likes: 230,
       views: 1650,
       comments_count: 9,
-      user_has_liked: true,
+      user_has_liked: false,
     },
     comments: [
       {
@@ -535,7 +535,7 @@ export const initialForumPosts: ForumPost[] = [
       likes: 285,
       views: 1890,
       comments_count: 11,
-      user_has_liked: true,
+      user_has_liked: false,
     },
     comments: [
       {

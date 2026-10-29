@@ -1,14 +1,20 @@
-// Regional overview: recorded conditions, map, model forecast, and recent evidence.
+// Homepage overview, field stories, and actions into the portal.
+// Todo:
+// -> Keep stories connected to their detail pages
+// -> Show motion and pending feedback without changing data flows
+
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { domAnimation, LazyMotion, MotionConfig, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import Link from "next/link";
 import type { BnpbSyncData, ForumPost, PlotFeatureCollection } from "@/types";
-import type { DataResult, ForecastLocation } from "@/types/environment";
-import { REGION_TABS, REGION_COORDINATES, RegionKey, matchRegion, formatId, formatDateId } from "@/utils/plotDisplay";
+import type { DataResult } from "@/types/environment";
 import { getSortedPosts } from "@/utils/forumDisplay";
 import { initialForumPosts } from "@/data/forumPostsData";
-import { OverviewMapPanel } from "./OverviewMapPanel";
-import { ForecastPanel } from "./ForecastPanel";
+import { HomeIdentityHero } from "./HomeIdentityHero";
+import { HomeActionButton, HomeStoryLabel } from "./HomeActionButton";
+import { HomeEvidenceMedia } from "./HomeEvidenceMedia";
 import styles from "./home.module.css";
 
 interface Props {
@@ -19,72 +25,334 @@ interface Props {
   region: string;
   onSelectRegion: (region: string) => void;
   onRetry: () => void;
+  onOpenFire?: () => void;
+  onOpenRecovery: () => void;
   onOpenForum: () => void;
   onOpenLocalPost: (post: ForumPost) => void;
-  onOpenRecovery: () => void;
+  onOpenReport?: () => void;
+  language?: "id" | "en";
 }
+
 const publishedIds = new Set(initialForumPosts.map(post => post.id));
 
 export function HomeOverview(props: Props) {
-  const { plots, bnpb, region, loading } = props;
-  const [location, setLocation] = useState<ForecastLocation | null>(null);
-  const currentRegion = REGION_TABS.find(r => r.key === region)!;
-  useEffect(() => {
-    setLocation(region === "all" ? null : {
-      coordinates: REGION_COORDINATES[region as RegionKey].center,
-      label: `Pusat wilayah ${currentRegion.province === "Jawa Barat" ? "Bekasi" : currentRegion.province}`,
-    });
-  }, [region, currentRegion.province]);
-  const filteredPlots = useMemo(() => plots.data.features.filter(p => matchRegion(p.properties.region, region)), [plots.data, region]);
-  const provinces = bnpb.data.provinces.filter(p => matchRegion(p.provinsi, region));
-  const recent = getSortedPosts(props.posts, region, "latest").slice(0, 3);
-  const plotDates = filteredPlots.map(p => p.properties.last_monitored_at).filter(Boolean).sort();
-  const bnpbDates = [...new Set(provinces.map(p => p.tgl_update).filter(Boolean))].sort();
-  const dateLabel = bnpbDates.length ? `${formatDateId(bnpbDates[0])}${bnpbDates.length > 1 ? ` - ${formatDateId(bnpbDates.at(-1)!)}` : ""}` : "Tanggal belum tersedia";
-  const plotSource = plots.origin === "sample" ? "Data contoh" : "Catatan BuktiPulih";
+  const reducedMotion = useReducedMotion();
+  const fieldUpdates = useMemo(() => getSortedPosts(props.posts, props.region, "latest").slice(0, 4), [props.posts, props.region]);
+  const dateFormat = new Intl.DateTimeFormat(props.language === "en" ? "en-GB" : "id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
+  const reveal = { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.15 } };
+  const revealTransition = { duration: reducedMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] as const };
 
-  return <div className={styles.home}>
-    <div className={styles.heading}>
-      <div><p className={styles.eyebrow}>Karhutla dan pemulihan</p><h1>Ringkasan wilayah</h1></div>
-      <label className={styles.regionLabel}>Wilayah<select aria-label="Wilayah" value={region} onChange={e => props.onSelectRegion(e.target.value)}>
-        {REGION_TABS.map(r => <option key={r.key} value={r.key}>{r.key === "all" ? "Semua wilayah" : r.key === "bekasi" ? "Bekasi" : r.province}</option>)}
-      </select></label>
-    </div>
-    <div className={styles.summary} aria-busy={loading}>
-      <section><h2>Karhutla tercatat</h2><p className={styles.number}>{loading ? "…" : provinces.length ? <>{formatId(provinces.reduce((sum, p) => sum + p.today_luas_terbakar_ha, 0), 2)} <small>ha</small></> : "Belum tersedia"}</p>
-        <p className={styles.source}>{bnpb.origin === "sample" ? "Data contoh" : "Catatan BNPB"} · {dateLabel}</p>
-        <p className={styles.source}>{region === "all" ? `${provinces.length} provinsi tercakup` : `Cakupan provinsi ${currentRegion.province}`}</p>
-      </section>
-      <section><h2>Pemulihan</h2><p className={styles.number}>{loading ? "…" : <>{formatId(filteredPlots.length)} <small>petak dipantau</small></>}</p>
-        <p className={styles.source}>{plotSource}{plotDates.length > 0 && ` · pemeriksaan terakhir ${formatDateId(plotDates.at(-1)!)}`}</p>
-        <p className={styles.source}>{filteredPlots.filter(p => ["perlu_rawat", "kritis", "mati"].includes(p.properties.latest_status)).length} petak perlu perhatian</p>
-      </section>
-    </div>
-    {!loading && (plots.failed || bnpb.failed) && <p className={styles.notice} role="status">Sebagian sumber belum tersedia. Data contoh diberi label. <button onClick={props.onRetry}>Coba lagi</button></p>}
-    <OverviewMapPanel plots={plots.data} region={region} plotSource={plotSource}
-      onSelectPlot={plot => setLocation({ coordinates: [plot.geometry.coordinates[1], plot.geometry.coordinates[0]], label: plot.properties.name })}
-      onSelectLocation={setLocation} onOpenRecovery={props.onOpenRecovery} />
-    <ForecastPanel location={location} />
-    <section aria-labelledby="latest-evidence-title">
-      <div className={styles.sectionHead}><h2 id="latest-evidence-title">Bukti terbaru</h2><button className={styles.textLink} onClick={props.onOpenForum}>Semua bukti →</button></div>
-      {recent.length === 0 ? <p className={styles.empty}>Belum ada bukti di wilayah ini.</p> : <div className={styles.evidenceList}>{recent.map(post => {
-        const local = !publishedIds.has(post.id);
-        const verified = post.field_verifications?.some(v => v.created_at && v.verifier_name && v.notes);
-        return <article className={styles.evidence} key={post.id}>
-          {/* Existing media keeps its natural aspect ratio; video uses its thumbnail. */}
-          {post.media.type === "image" || post.media.thumbnail_url ? <img src={post.media.thumbnail_url || post.media.url} alt={`Catatan ${post.location_name}`} loading="lazy" /> : <div className={styles.videoPlaceholder}>Video lapangan</div>}
-          <div><p className={styles.source}>{formatDateId(post.created_at)} · {local ? "Tersimpan di perangkat" : "Data contoh"}</p>
-            <h3>{post.location_name}</h3><p className={styles.muted}>{local && verified ? "Catatan pemeriksaan tersedia" : "Belum diperiksa"}</p>
-            <p className={styles.caption}>{post.caption}</p>
-            {local ? <button className={styles.textLink} onClick={() => props.onOpenLocalPost(post)}>Lihat bukti →</button> : <Link className={styles.textLink} href={`/forum/${post.id}`}>Lihat bukti →</Link>}
+  return (
+    <LazyMotion features={domAnimation} strict>
+    <MotionConfig reducedMotion="user">
+    <div className={styles.home}>
+      {/* 1. Hero Identitas: Headline bernyawa, foto bibit semai gambut Ketapang (sesuai Gambar 2) */}
+      <HomeIdentityHero
+        onOpenRecovery={props.onOpenRecovery}
+        onOpenForum={props.onOpenForum}
+        onOpenReport={props.onOpenReport}
+        language={props.language}
+      />
+
+      {/* 2. Seksi Tentang BuktiPulih (sesuai Gambar 2) */}
+      <m.section
+        className={styles.aboutSection}
+        aria-labelledby="about-title"
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: reducedMotion ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className={styles.aboutIntro}>
+          <h2 id="about-title" className={styles.aboutTitle}>
+            {props.language === "en" ? "About BuktiPulih" : "Tentang BuktiPulih"}
+          </h2>
+          <p className={styles.aboutDesc}>
+            {props.language === "en"
+              ? "BuktiPulih helps the public follow post-fire peatland recovery openly, clearly, and grounded in authentic field conditions."
+              : "BuktiPulih hadir untuk membantu publik memahami proses pemulihan pasca-karhutla secara lebih terbuka, mudah dipahami, dan dekat dengan kondisi nyata di lapangan."}
+          </p>
+          <HomeActionButton language={props.language}
+            type="button"
+            className={styles.aboutLink}
+            onClick={props.onOpenForum}
+          >
+            {props.language === "en" ? "Learn more →" : "Pelajari lebih lanjut →"}
+          </HomeActionButton>
+        </div>
+
+        <div className={styles.aboutCardsGrid}>
+          <article className={styles.aboutCard}>
+            <div className={styles.aboutCardIconGreen}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <h3 className={styles.aboutCardTitle}>
+              {props.language === "en" ? "Monitor conditions" : "Pantau kondisi"}
+            </h3>
+            <p className={styles.aboutCardText}>
+              {props.language === "en"
+                ? "Explore forest fire summaries and restoration zones from verifiable sources."
+                : "Lihat ringkasan karhutla dan wilayah pemulihan dari data yang tersedia."}
+            </p>
+          </article>
+
+          <article className={styles.aboutCard}>
+            <div className={styles.aboutCardIconGreen}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+              </svg>
+            </div>
+            <h3 className={styles.aboutCardTitle}>
+              {props.language === "en" ? "Track progress" : "Ikuti perkembangan"}
+            </h3>
+            <p className={styles.aboutCardText}>
+              {props.language === "en"
+                ? "Follow ground observations, location updates, and recovery stories over time."
+                : "Telusuri bukti lapangan, pembaruan lokasi, dan cerita pemulihan dari waktu ke waktu."}
+            </p>
+          </article>
+
+          <article className={styles.aboutCard}>
+            <div className={styles.aboutCardIconOrange}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <h3 className={styles.aboutCardTitle}>
+              {props.language === "en" ? "Contribute evidence" : "Ikut berkontribusi"}
+            </h3>
+            <p className={styles.aboutCardText}>
+              {props.language === "en"
+                ? "Locals can submit photos, videos, or field notes to enrich ground transparency."
+                : "Warga dapat mengirim foto, video, atau catatan lapangan untuk memperkaya informasi."}
+            </p>
+          </article>
+        </div>
+      </m.section>
+
+      {/* 3. Ringkasan situasi (4 Kartu Metrik sesuai Gambar 2) */}
+      <section className={styles.situationSection} aria-labelledby="situation-title">
+        <div className={styles.situationHeader}>
+          <div className={styles.situationTitleWrap}>
+            <h2 id="situation-title" className={styles.situationTitle}>
+              {props.language === "en" ? "Situation Summary" : "Ringkasan situasi"}
+            </h2>
           </div>
-        </article>;
-      })}</div>}
-    </section>
-    <details className={styles.sources}><summary>Sumber data</summary>
-      <p>Karhutla: catatan BNPB sesuai tanggal dan cakupan yang ditampilkan. Petak serta bukti: catatan BuktiPulih; dataset lokal ditandai sebagai data contoh.</p>
-      <p><a href="https://firms.modaps.eosdis.nasa.gov/">NASA FIRMS</a>: deteksi panas VIIRS NOAA-20/21. Titik panas tidak otomatis menunjukkan luas kebakaran atau verifikasi lapangan.</p>
-      <p><a href="https://open-meteo.com/">Open-Meteo</a> dan <a href="https://atmosphere.copernicus.eu/">Copernicus CAMS</a>: prakiraan model PM2.5, angin, dan hujan pada koordinat pilihan. PM2.5 bukan pembacaan sensor atau ukuran asap kebakaran saja.</p>
-    </details>
-  </div>;
+          <div className={styles.situationMeta}>
+            <HomeActionButton language={props.language}
+              type="button"
+              className={styles.situationMetaLink}
+              onClick={props.onOpenFire || props.onOpenRecovery}
+            >
+              <span>{props.language === "en" ? "View data details →" : "Lihat detail data →"}</span>
+            </HomeActionButton>
+          </div>
+        </div>
+
+        <div className={styles.situationGrid}>
+          {/* Kartu 1: Luas karhutla tercatat */}
+          <HomeActionButton language={props.language} className={styles.situationCard} onClick={props.onOpenFire || props.onOpenRecovery} data-reveal {...reveal} transition={{ ...revealTransition, delay: 0 }}>
+            <span className={styles.situationCardTop}>
+              <span className={styles.situationIconFlame}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                </svg>
+              </span>
+              <span className={styles.situationValueWrap}>
+                <span className={styles.situationValue}>780,05</span>
+                <span className={styles.situationUnit}>ha</span>
+              </span>
+            </span>
+            <span className={styles.situationCardLabel}>
+              {props.language === "en" ? "Recorded burned area" : "Luas karhutla tercatat"}
+            </span>
+            <span className={styles.situationCardSub}>
+              {props.language === "en"
+                ? "Last update · 26 Sep 2026 · 6 provinces"
+                : "Pembaruan terakhir · 26 Sep 2026 · 6 provinsi"}
+            </span>
+          </HomeActionButton>
+
+          {/* Kartu 2: Titik panas terpantau */}
+          <HomeActionButton language={props.language} className={styles.situationCard} onClick={props.onOpenFire || props.onOpenRecovery} data-reveal {...reveal} transition={{ ...revealTransition, delay: 0.06 }}>
+            <span className={styles.situationCardTop}>
+              <span className={styles.situationIconHotspot}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="6" r="2"></circle>
+                  <circle cx="12" cy="18" r="2"></circle>
+                  <circle cx="6" cy="12" r="2"></circle>
+                  <circle cx="18" cy="12" r="2"></circle>
+                </svg>
+              </span>
+              <span className={styles.situationValueWrap}>
+                <span className={styles.situationValue}>1.243</span>
+              </span>
+            </span>
+            <span className={styles.situationCardLabel}>
+              {props.language === "en" ? "Hotspots detected" : "Titik panas terpantau"}
+            </span>
+            <span className={styles.situationCardSub}>
+              {props.language === "en" ? "Within last 24 hours · (Sample data)" : "Dalam 24 jam terakhir · (Data contoh)"}
+            </span>
+          </HomeActionButton>
+
+          {/* Kartu 3: Area pemulihan dipantau */}
+          <HomeActionButton language={props.language} className={styles.situationCard} onClick={props.onOpenRecovery} data-reveal {...reveal} transition={{ ...revealTransition, delay: 0.12 }}>
+            <span className={styles.situationCardTop}>
+              <span className={styles.situationIconLeaf}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+                </svg>
+              </span>
+              <span className={styles.situationValueWrap}>
+                <span className={styles.situationValue}>9</span>
+                <span className={styles.situationUnit}>{props.language === "en" ? "plots" : "petak"}</span>
+              </span>
+            </span>
+            <span className={styles.situationCardLabel}>
+              {props.language === "en" ? "Recovery area monitored" : "Area pemulihan dipantau"}
+            </span>
+            <span className={styles.situationCardSub}>
+              {props.language === "en"
+                ? "Last physical audit · 13 Oct 2026 · 2 plots need attention"
+                : "Pemeriksaan terakhir · 13 Okt 2026 · 2 petak perlu perhatian"}
+            </span>
+          </HomeActionButton>
+
+          {/* Kartu 4: Bukti warga masuk */}
+          <HomeActionButton language={props.language} className={styles.situationCard} onClick={props.onOpenForum} data-reveal {...reveal} transition={{ ...revealTransition, delay: 0.18 }}>
+            <span className={styles.situationCardTop}>
+              <span className={styles.situationIconDoc}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </span>
+              <span className={styles.situationValueWrap}>
+                <span className={styles.situationValue}>27</span>
+                <span className={styles.situationUnit}>{props.language === "en" ? "reports" : "laporan"}</span>
+              </span>
+            </span>
+            <span className={styles.situationCardLabel}>
+              {props.language === "en" ? "Citizen evidence received" : "Bukti warga masuk"}
+            </span>
+            <span className={styles.situationCardSub}>
+              {props.language === "en"
+                ? "14 verified · 8 under review · 5 unverified"
+                : "14 diverifikasi · 8 sedang ditinjau · 5 belum diperiksa"}
+            </span>
+          </HomeActionButton>
+        </div>
+      </section>
+
+      {/* 4. Dokumentasi Dari Garis Depan: Kabar terbaru dari lapangan (sesuai Gambar 1) */}
+      <section aria-labelledby="latest-evidence-title" className={styles.evidenceSection}>
+        <div className={styles.evidenceHeader}>
+          <div>
+            <h2 id="latest-evidence-title" className={styles.evidenceTitle}>
+              {props.language === "en" ? "Latest Field Updates" : "Kabar terbaru dari lapangan"}
+            </h2>
+          </div>
+          <HomeActionButton language={props.language} className={styles.viewAllEvidence} onClick={props.onOpenForum}>
+            {props.language === "en" ? "View all field evidence →" : "Lihat semua bukti →"}
+          </HomeActionButton>
+        </div>
+
+        <div className={styles.evidenceWrap}>
+          {fieldUpdates.length === 0 && <div className={styles.emptyEvidence}>
+            <p>{props.language === "en" ? "No field stories in this region yet." : "Belum ada cerita lapangan di wilayah ini."}</p>
+            <HomeActionButton language={props.language} className={styles.viewAllEvidence} onClick={props.onOpenReport || props.onOpenForum}>{props.language === "en" ? "Share field evidence" : "Kirim bukti dari lapangan"}</HomeActionButton>
+          </div>}
+          <div className={styles.evidenceGrid}>
+            {fieldUpdates.map((item, index) => (
+              <m.article className={styles.evidenceCard} key={item.id} whileHover={reducedMotion ? undefined : { y: -3, transition: { duration: 0.2 } }} data-reveal {...reveal} transition={{ ...revealTransition, delay: index * 0.06 }}>
+                <HomeEvidenceMedia media={item.media} title={item.location_name} language={props.language} />
+                <div className={styles.evidenceBody}>
+                  <div className={styles.evidenceMetaBar}>
+                    <span className={item.field_verifications?.length ? styles.badgeVerified : styles.badgeUnverified}>
+                      {item.field_verifications?.length
+                        ? `${item.field_verifications.length} ${props.language === "en" ? "field checks" : "pemeriksaan"}`
+                        : (props.language === "en" ? "Not yet checked" : "Belum diperiksa")}
+                    </span>
+                    <span className={styles.evidenceDate}>{dateFormat.format(new Date(item.created_at))}</span>
+                  </div>
+                  <h3 className={styles.evidenceCardTitle}>{item.location_name}</h3>
+                  <p className={styles.evidenceCaption}>{item.caption}</p>
+                  <div className={styles.evidenceFoot}>
+                    {(publishedIds.has(item.id) || item.persisted) ? (
+                      <Link href={`/forum/${item.id}`} className={styles.evidenceStoryLink} aria-label={`${props.language === "en" ? "Read story" : "Lihat cerita"}: ${item.location_name}`}>
+                        <HomeStoryLabel language={props.language} />
+                      </Link>
+                    ) : (
+                      <HomeActionButton language={props.language} className={styles.evidenceStoryLink} onClick={() => props.onOpenLocalPost(item)}>
+                        {props.language === "en" ? "Read story →" : "Lihat cerita →"}
+                      </HomeActionButton>
+                    )}
+                  </div>
+                </div>
+              </m.article>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 5. Wide Banner Ranger: Hutan pulih lewat banyak tangan (sesuai Gambar 1 di atas footer) */}
+      <m.section className={styles.rangerBanner} aria-labelledby="ranger-banner-title" data-reveal {...reveal} transition={revealTransition}>
+        <div className={styles.rangerPhotoWrap}>
+          <img
+            src="/ranger-field-patrol.jpg"
+            alt={props.language === "en" ? "Field ranger observing peatland" : "Kader pemantau memeriksa kondisi lahan gambut"}
+            className={styles.rangerPhoto}
+            loading="lazy"
+          />
+        </div>
+        <div className={styles.rangerContent}>
+          <h2 id="ranger-banner-title" className={styles.rangerTitle}>
+            {props.language === "en"
+              ? "Forests recover through many hands."
+              : "Hutan pulih lewat banyak tangan."}
+          </h2>
+          <p className={styles.rangerDesc}>
+            {props.language === "en"
+              ? "If you are on the ground or have relevant observations, share your photos, videos, or field logs. One small insight can mean so much for transparent recovery."
+              : "Jika kamu berada di lapangan atau memiliki informasi yang relevan, kirimkan foto, video, atau catatanmu. Satu informasi kecil bisa berarti besar untuk pemulihan yang lebih terbuka."}
+          </p>
+        </div>
+        <div className={styles.rangerActions}>
+          <HomeActionButton language={props.language}
+            type="button"
+            className={styles.btnRangerPrimary}
+            onClick={props.onOpenReport || props.onOpenForum}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <span>{props.language === "en" ? "Submit evidence now" : "Kirim bukti sekarang"}</span>
+          </HomeActionButton>
+          <HomeActionButton language={props.language}
+            type="button"
+            className={styles.btnRangerSecondary}
+            onClick={props.onOpenForum}
+          >
+            <span>{props.language === "en" ? "Learn how to contribute →" : "Pelajari cara kontribusi →"}</span>
+          </HomeActionButton>
+        </div>
+      </m.section>
+    </div>
+    </MotionConfig>
+    </LazyMotion>
+  );
 }

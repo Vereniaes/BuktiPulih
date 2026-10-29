@@ -6,26 +6,22 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { HomeOverview } from "@/components/home/HomeOverview";
 import { REGION_TABS } from "@/utils/plotDisplay";
 import type { DataResult } from "@/types/environment";
 import dynamic from "next/dynamic";
 import { HeaderNav, NavPortalTab } from "@/components/HeaderNav";
-import { BnpbSyncBanner } from "@/components/BnpbSyncBanner";
-import { ForumFeed } from "@/components/ForumFeed";
-import { PostDetailModal } from "@/components/PostDetailModal";
 import { CreatePostModal } from "@/components/CreatePostModal";
-import { GrowthCalendar } from "@/components/GrowthCalendar";
-import { ImpactLedger } from "@/components/ImpactLedger";
 import { AuthModal } from "@/components/AuthModal";
+import { PageMotion } from "@/components/PageMotion";
+import { hasCompleteProfile } from "@/types/account";
+import { useAccount } from "@/components/account/AccountSession";
+import { useForumPosts } from "./forum/useForumPosts";
+import { cacheForumPosts } from "@/utils/forumStorage";
 
 import {
   getHomepageDataApi,
-  getImpactLedgerApi,
-  getTimelineApi,
-  logoutKaderApi,
 } from "@/services/api";
 import {
   getOfflineDrafts,
@@ -33,90 +29,65 @@ import {
 } from "@/utils/offlineQueue";
 
 import { mockPlotsData } from "@/data/plotsData";
-import { mockImpactData } from "@/data/impactData";
-import { mockTimelineData } from "@/data/timelineData";
 import { mockBnpbData } from "@/data/bnpbData";
-import { initialForumPosts } from "@/data/forumPostsData";
 import {
   PlotFeatureCollection,
-  ImpactLedgerData,
-  TimelineItem,
   BnpbSyncData,
-  ForumPost,
-  ForumComment,
+  RecoveryReport,
 } from "@/types";
 
 // dynamic import peta leaflet untuk mencegah isu render sisi server (ssr) -------
+const HomeOverview = dynamic(() => import("@/components/home/HomeOverview").then(mod => mod.HomeOverview));
+const ForumFeed = dynamic(() => import("@/components/ForumFeed").then(mod => mod.ForumFeed));
+
 const FireHazeMap = dynamic(
   () => import("@/components/FireHazeMap").then((mod) => mod.FireHazeMap),
-  {
-    loading: () => (
-      <div
-        className="leaflet-map-wrapper"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#F1F5F9",
-          color: "#64748B",
-          fontWeight: 700,
-        }}
-      >
-        <span>Memuat Peta Sebaran Titik Api & Kabut Asap BNPB...</span>
-      </div>
-    ),
-  }
+  { ssr: false, loading: () => <div className="hazard-map-loading" role="status">Memuat peta…</div> }
 );
 
 const RecoveryMap = dynamic(
   () => import("@/components/RecoveryMap").then((mod) => mod.RecoveryMap),
-  {
-    loading: () => (
-      <div
-        className="leaflet-map-wrapper"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#F1F5F9",
-          color: "#64748B",
-          fontWeight: 700,
-        }}
-      >
-        <span>Memuat Peta Kawasan Pemulihan...</span>
-      </div>
-    ),
-  }
+  { ssr: false, loading: () => <div className="hazard-map-loading" role="status">Memuat peta…</div> }
 );
 // end of dynamic import peta ------------------------------------------------------
-
-const STORAGE_KEY_POSTS = "buktipulih_forum_posts_v1";
 
 export default function PortalClient() {
   // state portal navigasi 3 tab ---------------------------------------------------
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
-  const activePortalTab: NavPortalTab = tab === "fire" || tab === "recovery" || tab === "forum" ? tab : "home";
+  const validTabs: NavPortalTab[] = ["home", "fire", "recovery", "forum"];
+  const activePortalTab: NavPortalTab = (tab === "citizen" || tab === "articles") ? "forum" : validTabs.includes(tab as NavPortalTab) ? (tab as NavPortalTab) : "home";
   const region = searchParams.get("region") ?? "all";
   const selectedRegion = REGION_TABS.some(item => item.key === region) ? region : "all";
-  const navigate = useCallback((changes: { tab?: NavPortalTab; region?: string }) => {
+  const navigate = useCallback((changes: { tab?: NavPortalTab; region?: string; plot?: string | null; report?: string | null }) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("compose");
     for (const [key, value] of Object.entries(changes)) {
-      if (value === "home" || value === "all") params.delete(key);
+      if (value === null || value === "home" || value === "all") params.delete(key);
       else params.set(key, value);
     }
     router.push(params.size ? `/?${params}` : "/", { scroll: false });
   }, [router, searchParams]);
-  const setActivePortalTab = (value: NavPortalTab) => navigate({ tab: value });
-  const setSelectedRegion = (value: string) => navigate({ region: value });
+  useEffect(() => {
+    if (tab !== "citizen" && tab !== "articles") return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "forum");
+    router.replace(`/?${params.toString()}${window.location.hash}`, { scroll: false });
+  }, [router, searchParams, tab]);
+  const setActivePortalTab = (value: NavPortalTab) => navigate({ tab: value, plot: null, report: null });
+  const setSelectedRegion = (value: string) => navigate({ region: value, plot: null, report: null });
+  const previousTab = useRef(activePortalTab);
+  useEffect(() => {
+    if (previousTab.current === activePortalTab) return;
+    previousTab.current = activePortalTab;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
+  }, [activePortalTab]);
 
   // state data aplikasi -----------------------------------------------------------
-  const [plotsData, setPlotsData] = useState<PlotFeatureCollection>(mockPlotsData);
-  const [impactData, setImpactData] = useState<ImpactLedgerData>(mockImpactData);
-  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>(mockTimelineData);
-  const [bnpbData, setBnpbData] = useState<BnpbSyncData>(mockBnpbData);
-  const [forumPosts, setForumPosts] = useState<ForumPost[]>(initialForumPosts);
+  const forumSource = useForumPosts(activePortalTab === "home" ? 2 : 1);
+  const { posts: forumPosts, setPosts: setForumPosts } = forumSource;
 
   // state filter wilayah peta pemulihan -------------------------------------------
   const [plotSource, setPlotSource] = useState<DataResult<PlotFeatureCollection>>({ data: mockPlotsData, origin: "sample", fetched_at: null, failed: false });
@@ -124,85 +95,62 @@ export default function PortalClient() {
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   // state modal interaksi ---------------------------------------------------------
-  const [selectedPostDetail, setSelectedPostDetail] = useState<ForumPost | null>(null);
-  const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const reportRequested = isReportOpen || searchParams.get("compose") === "1";
+  const resumedReport = useRef(false);
+  const closeReport = useCallback(() => {
+    setIsReportOpen(false);
+    if (searchParams.has("compose")) {
+      const params = new URLSearchParams(searchParams.toString()); params.delete("compose");
+      router.replace(params.size ? `/?${params}` : "/", { scroll: false });
+    }
+  }, [router, searchParams]);
+  const openReport = () => { resumedReport.current = false; setIsReportOpen(true); };
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-  const [currentUser, setCurrentUser] = useState<Record<string, unknown> | null>(null);
+  const { user: currentUser, status: accountStatus, setUser: setCurrentUser } = useAccount();
   const [offlineDraftsCount, setOfflineDraftsCount] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
-  // state tema antarmuka: 'light' (Ijo-Krem) vs 'dark' (Item-Ijo-Orange) ----------
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  // state dwi-bahasa (ID / EN) ----------------------------------------------------
+  const [language, setLanguage] = useState<"id" | "en">("id");
+  const toggleLanguage = () => {
+    setLanguage((prev) => {
+      const next = prev === "id" ? "en" : "id";
+      try { localStorage.setItem("buktipulih_language", next); } catch {}
+      return next;
+    });
+  };
 
   // ambil data dari backend & localstorage saat pertama kali dimuat ---------------
-  const refreshAllData = async () => {
+  const refreshAllData = useCallback(async () => {
     try {
-      const [overview, impactRes, timelineRes] = await Promise.all([
-        getHomepageDataApi(),
-        getImpactLedgerApi(),
-        getTimelineApi(),
-      ]);
+      const overview = await getHomepageDataApi();
 
-      setPlotsData(overview.plots.data);
       setPlotSource(overview.plots);
-      setBnpbData(overview.bnpb.data);
       setBnpbSource(overview.bnpb);
-      if (impactRes?.total_planted_trees > 0) setImpactData(impactRes);
-      if (timelineRes?.length > 0) setTimelineItems(timelineRes);
     } catch (err) {
       console.warn("[App] menggunakan fallback lokal:", err);
     } finally {
       setIsDataLoading(false);
     }
-  };
+  }, []);
+
+  const overviewRequested = useRef(false);
+  useEffect(() => {
+    if (activePortalTab === "fire" || overviewRequested.current) return;
+    overviewRequested.current = true;
+    void refreshAllData();
+  }, [activePortalTab, refreshAllData]);
 
   useEffect(() => {
     setIsMounted(true);
-    refreshAllData();
     setOfflineDraftsCount(getOfflineDrafts().length);
 
-    // baca tema tersimpan
-    try {
-      const savedTheme = localStorage.getItem("buktipulih_theme") as "light" | "dark" | null;
-      if (savedTheme === "dark" || savedTheme === "light") {
-        setTheme(savedTheme);
-        document.documentElement.setAttribute("data-theme", savedTheme);
-      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setTheme("dark");
-        document.documentElement.setAttribute("data-theme", "dark");
-      } else {
-        document.documentElement.setAttribute("data-theme", "light");
-      }
-    } catch (e) {
-      console.warn("Gagal membaca tema:", e);
-    }
+    try { localStorage.removeItem("buktipulih_theme"); } catch {}
 
-    // baca postingan warga yang disimpan lokal jika ada
-    try {
-      const savedPosts = localStorage.getItem(STORAGE_KEY_POSTS);
-      if (savedPosts) {
-        const parsed = JSON.parse(savedPosts);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setForumPosts(parsed);
-        }
-      }
-    } catch (e) {
-      console.warn("Gagal membaca cache forum:", e);
-    }
   }, []);
-
-  // handler sakelar tema light vs dark --------------------------------------------
-  const handleToggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem("buktipulih_theme", nextTheme);
-    showToast(nextTheme === "dark" ? "Tema gelap" : "Tema terang");
-  };
-  // end of ambil data -------------------------------------------------------------
 
   // helper notifikasi toast -------------------------------------------------------
   const showToast = (msg: string) => {
@@ -229,76 +177,29 @@ export default function PortalClient() {
         }
         return post;
       });
-      localStorage.setItem(STORAGE_KEY_POSTS, JSON.stringify(updated));
+      cacheForumPosts(updated);
       return updated;
     });
-
-    if (selectedPostDetail && selectedPostDetail.id === postId) {
-      setSelectedPostDetail((prev) => {
-        if (!prev) return null;
-        const currentlyLiked = !!prev.metrics.user_has_liked;
-        return {
-          ...prev,
-          metrics: {
-            ...prev.metrics,
-            likes: currentlyLiked ? prev.metrics.likes - 1 : prev.metrics.likes + 1,
-            user_has_liked: !currentlyLiked,
-          },
-        };
-      });
-    }
-  };
-
-  // handler tambah komentar warga -------------------------------------------------
-  const handleAddComment = (postId: string, comment: ForumComment) => {
-    setForumPosts((prev) => {
-      const updated = prev.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            metrics: {
-              ...post.metrics,
-              comments_count: post.metrics.comments_count + 1,
-            },
-            comments: [comment, ...post.comments],
-          };
-        }
-        return post;
-      });
-      localStorage.setItem(STORAGE_KEY_POSTS, JSON.stringify(updated));
-      return updated;
-    });
-
-    if (selectedPostDetail && selectedPostDetail.id === postId) {
-      setSelectedPostDetail((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          metrics: {
-            ...prev.metrics,
-            comments_count: prev.metrics.comments_count + 1,
-          },
-          comments: [comment, ...prev.comments],
-        };
-      });
-    }
-
-    showToast("Komentar Anda berhasil dikirim ke forum!");
   };
 
   // handler kirim postingan baru oleh warga ---------------------------------------
-  const handleCreatePost = (newPost: ForumPost) => {
+  const handleCreatePost = (newPost: RecoveryReport) => {
     setForumPosts((prev) => {
       const updated = [newPost, ...prev];
-      localStorage.setItem(STORAGE_KEY_POSTS, JSON.stringify(updated));
+      cacheForumPosts(updated);
       return updated;
     });
-    showToast("Bukti pemulihan Anda berhasil dipublikasikan di Forum Pulih!");
-    setActivePortalTab("forum");
+    setIsReportOpen(false);
+    showToast(language === "en" ? "Evidence saved. Status: unverified." : "Bukti tersimpan. Status: belum diverifikasi.");
+    navigate({ tab: "recovery", region: "all", plot: null, report: newPost.id });
   };
 
   // handler sinkronisasi draft offline --------------------------------------------
   const handleSyncOffline = async () => {
+    if (!currentUser) { setIsAuthModalOpen(true); return; }
+    if (!["GOVERNMENT_VERIFIER", "ADMIN_SUPER"].includes(currentUser.role)) {
+      showToast("Draft lama tetap tersimpan. Gunakan Kirim bukti untuk membuat laporan warga."); return;
+    }
     showToast("Menyinkronkan draft luring ke server...");
     const result = await syncAllOfflineDrafts();
     setOfflineDraftsCount(result.remainingCount);
@@ -306,22 +207,20 @@ export default function PortalClient() {
       showToast(`${result.syncedCount} laporan luring berhasil disinkronkan!`);
       await refreshAllData();
     }
+    if (result.remainingCount > 0) showToast(`${result.remainingCount} draft belum tersinkron dan tetap tersimpan di perangkat.`);
   };
 
-  // handler logout kader ----------------------------------------------------------
-  const handleLogout = async () => {
-    await logoutKaderApi();
-    setCurrentUser(null);
-    showToast("Sesi kader telah keluar.");
-  };
+  const isMapPage = activePortalTab === "fire" || activePortalTab === "recovery";
 
   return (
-    <div className={`portal-shell ${activePortalTab === "home" ? "portal-home" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className={`portal-shell ${activePortalTab === "home" ? "portal-home" : isMapPage ? "portal-fire" : ""}`} style={{ minHeight: isMapPage ? 0 : "100vh", display: "flex", flexDirection: "column", overflowAnchor: activePortalTab === "forum" ? "none" : undefined }}>
       {/* toast notifikasi mengambang -------------------------------------------- */}
       {toastMessage && (
-        <div
+        <div role="status"
           style={{
             position: "fixed",
+            pointerEvents: "none",
+            maxWidth: "calc(100vw - 48px)",
             bottom: "24px",
             right: "24px",
             zIndex: 3000,
@@ -343,205 +242,260 @@ export default function PortalClient() {
         </div>
       )}
 
-      {/* header global navigasi 3 tab ------------------------------------------- */}
+      {/* header global navigasi portal ----------------------------------------- */}
       <HeaderNav
         activeTab={activePortalTab}
         setActiveTab={setActivePortalTab}
-        onOpenCreatePostModal={() => setIsCreatePostOpen(true)}
+        onOpenReport={openReport}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         currentUser={currentUser}
-        onLogout={handleLogout}
         offlineDraftsCount={offlineDraftsCount}
         onSyncOffline={handleSyncOffline}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
+        language={language}
+        onToggleLanguage={toggleLanguage}
       />
 
-      {/* ticker sinkronisasi live bnpb ------------------------------------------ */}
-      {activePortalTab !== "home" && <div className="container" style={{ paddingTop: "20px" }}>
-        <BnpbSyncBanner data={bnpbData} />
-      </div>}
-
       {/* konten utama portal dinamis berdasarkan tab aktif ---------------------- */}
-      <main className="container" style={{ flex: 1, paddingTop: "24px" }}>
-        {activePortalTab === "home" && <HomeOverview
-          plots={plotSource} bnpb={bnpbSource} posts={forumPosts} loading={isDataLoading}
-          region={selectedRegion} onSelectRegion={setSelectedRegion}
-          onRetry={() => { setIsDataLoading(true); void refreshAllData(); }}
-          onOpenForum={() => setActivePortalTab("forum")}
-          onOpenLocalPost={(post) => { setSelectedPostDetail(post); setIsPostDetailOpen(true); }}
-          onOpenRecovery={() => setActivePortalTab("recovery")}
-        />}
-        {/* TAB 1: PANTAU KARHUTLA & KABUT ASAP (LIVE BNPB) ----------------------- */}
-        {activePortalTab === "fire" && (
-          <div>
-            {isMounted && (
-              <FireHazeMap
-                bnpbData={bnpbData}
-                onNavigateToRecovery={(regionKey) => {
-                  navigate({ tab: "recovery", ...(regionKey ? { region: regionKey } : {}) });
-                }}
-              />
-            )}
-          </div>
+      <PageMotion key={activePortalTab} tabIndex={-1} className={isMapPage ? "portal-map-main" : "container"} style={{ flex: 1, paddingTop: activePortalTab === "home" || isMapPage ? 0 : "24px" }}>
+        {activePortalTab === "home" && (
+          <HomeOverview
+            plots={plotSource}
+            bnpb={bnpbSource}
+            posts={forumPosts}
+            loading={isDataLoading}
+            region={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+            onRetry={() => {
+              setIsDataLoading(true);
+              void refreshAllData();
+            }}
+            onOpenFire={() => setActivePortalTab("fire")}
+            onOpenRecovery={() => setActivePortalTab("recovery")}
+            onOpenForum={() => setActivePortalTab("forum")}
+            onOpenLocalPost={(post) => router.push(`/forum/${encodeURIComponent(post.id)}`)}
+            onOpenReport={openReport}
+            language={language}
+          />
         )}
+
+        {/* TAB 1: PANTAU KARHUTLA & KABUT ASAP (LIVE BNPB) ----------------------- */}
+        {activePortalTab === "fire" && isMounted && <FireHazeMap language={language} />}
 
         {/* TAB 2: BUKTI PULIH (PETA PEMULIHAN PASCA-PADAM) ------------------------ */}
-        {activePortalTab === "recovery" && (
-          <div>
-            {isMounted && (
-              <RecoveryMap
-                plots={plotsData}
-                selectedRegion={selectedRegion}
-                onSelectRegion={setSelectedRegion}
-                onNavigateToForumWithPlot={() => {
-                  setActivePortalTab("forum");
-                }}
-              />
-            )}
-
-            {/* ringkasan metrik pemulihan ---------------------------------------- */}
-            <div style={{ marginTop: "28px" }}>
-              <ImpactLedger data={impactData} />
-            </div>
-
-            {/* kalender pertumbuhan bibit per bulan ------------------------------- */}
-            <div style={{ marginTop: "32px", marginBottom: "40px" }}>
-              <GrowthCalendar
-                plots={plotsData}
-                items={timelineItems}
-                selectedRegion={selectedRegion}
-                onSelectRegion={setSelectedRegion}
-              />
-            </div>
-          </div>
+        {activePortalTab === "recovery" && isMounted && (
+          <RecoveryMap
+            plots={plotSource.data}
+            loading={isDataLoading}
+            sample={plotSource.origin === "sample"}
+            selectedRegion={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+            selectedPlotId={searchParams.get("plot")}
+            onSelectPlot={(plot) => navigate({ plot, report: null })}
+            selectedReportId={searchParams.get("report")}
+            onSelectReport={report => navigate({ report, plot: null })}
+            language={language}
+          />
         )}
 
-        {/* TAB 3: FORUM PULIH (TUMBLR-STYLE MASONRY FEED) ------------------------ */}
+        {/* TAB 3: RUANG SUARA HIJAU (KIRIMAN WARGA) ------------------- */}
         {activePortalTab === "forum" && (
           <div>
             <ForumFeed
+              language={language}
               posts={forumPosts}
+              source={forumSource}
               selectedRegionFilter={selectedRegion}
               onSelectRegionFilter={setSelectedRegion}
-              onOpenPostDetail={(post) => {
-                setSelectedPostDetail(post);
-                setIsPostDetailOpen(true);
-              }}
-              onOpenCreatePost={() => setIsCreatePostOpen(true)}
+              onOpenPostDetail={(post) => router.push(`/forum/${encodeURIComponent(post.id)}`)}
               onToggleLike={handleToggleLike}
             />
           </div>
         )}
-      </main>
 
-      {/* modal detail postingan & utas komentar warga --------------------------- */}
-      <PostDetailModal
-        post={selectedPostDetail}
-        isOpen={isPostDetailOpen}
-        onClose={() => {
-          setIsPostDetailOpen(false);
-          setSelectedPostDetail(null);
-        }}
-        onAddComment={handleAddComment}
-        onToggleLike={handleToggleLike}
-      />
+      </PageMotion>
 
       {/* modal buat postingan bukti warga baru (+) ------------------------------ */}
       <CreatePostModal
-        isOpen={isCreatePostOpen}
-        onClose={() => setIsCreatePostOpen(false)}
+        isOpen={reportRequested}
+        onClose={closeReport}
         onSubmitPost={handleCreatePost}
+        language={language}
       />
 
       {/* modal autentikasi login kader jika diperlukan -------------------------- */}
       <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={isAuthModalOpen || (reportRequested && !currentUser && accountStatus !== "loading")}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          if (!resumedReport.current && reportRequested) closeReport();
+          resumedReport.current = false;
+        }}
         onLoginSuccess={(user, msg) => {
           setCurrentUser(user);
           showToast(msg);
+          if (reportRequested && hasCompleteProfile(user)) {
+            resumedReport.current = true; setIsReportOpen(true);
+          } else {
+            if (reportRequested) closeReport();
+            router.push("/profile");
+          }
         }}
       />
 
-      {/* footer bersih buktipulih ------------------------------------------------ */}
-      <footer className="global-footer">
-        <div className="container">
-          <div className="footer-inner">
-            <div>
-              <div className="footer-brand-title">buktipulih</div>
-              <p style={{ lineHeight: 1.6, maxWidth: "340px" }}>
-                Platform partisipatif warga untuk pemantauan karhutla terbuka dan dokumentasi nyata
-                pemulihan lahan pasca-bencana.
+      {/* footer berlatar utuh lanskap restorasi buktipulih ---------------------- */}
+      {!isMapPage && <footer className="global-footer-stage">
+        {/* lapisan latar seni lanskap vektor dengan smooth blend */}
+        <div className="footer-backdrop-canvas" aria-hidden="true">
+          <img
+            src="/footer-panoramic-backdrop.jpg"
+            alt=""
+            className="footer-backdrop-img"
+          />
+          <div className="footer-top-blend" />
+        </div>
+
+        {/* konten interaktif footer */}
+        <div className="footer-content-layer">
+          {/* zona slogan kampanye di atas lembah hijau */}
+          <div className="footer-fluid-wrapper">
+            <div className="footer-campaign-hero">
+              <h2 className="footer-campaign-title">Pulihkan Lahan, Rawat Masa Depan</h2>
+              <p className="footer-campaign-desc">
+                Bersama warga merawat sekat kanal dan memantau pemulihan ekosistem gambut Nusantara.
               </p>
             </div>
-
-            <div>
-              <div style={{ color: "var(--brand-navy-900)", fontWeight: 700, marginBottom: "8px" }}>
-                Navigasi Portal
-              </div>
-              <ul style={{ listStyle: "none", lineHeight: 1.8, padding: 0 }}>
-                <li>
-                  <button
-                    type="button"
-                    style={{ background: "none", border: "none", color: "#4A5568", cursor: "pointer", padding: 0 }}
-                    onClick={() => setActivePortalTab("fire")}
-                  >
-                    · Pantau Karhutla & Asap (BNPB)
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    style={{ background: "none", border: "none", color: "#4A5568", cursor: "pointer", padding: 0 }}
-                    onClick={() => setActivePortalTab("recovery")}
-                  >
-                    · Peta Kawasan Bukti Pulih
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    style={{ background: "none", border: "none", color: "#4A5568", cursor: "pointer", padding: 0 }}
-                    onClick={() => setActivePortalTab("forum")}
-                  >
-                    · Forum Pulih (Kiriman Warga)
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <div style={{ color: "var(--brand-navy-900)", fontWeight: 700, marginBottom: "8px" }}>
-                Karakteristik Sistem
-              </div>
-              <ul style={{ listStyle: "none", lineHeight: 1.8, padding: 0 }}>
-                <li>· Transparansi data resmi WebGIS BNPB</li>
-                <li>· Partisipasi foto & video langsung dari warga</li>
-                <li>· Otentikasi identitas komentar ringan</li>
-                <li>· Zero-Cost OpenStreetMap & Cloud Architecture</li>
-              </ul>
-            </div>
           </div>
 
-          <div className="footer-bottom">
-            <div>buktipulih · platform partisipasi pemulihan pasca-karhutla 2026</div>
-            <div style={{ color: "#718096" }}>
-              bukti pulih datang dari mereka yang merawat di lapangan
+          {/* zona dasar hijau hutan: navigasi & transparansi */}
+          <div className="footer-base-panel">
+            <div className="footer-fluid-wrapper">
+              <div className="footer-inner">
+                <div>
+                  <div className="footer-brand-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <img src="/brand-logogram.png" alt="" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+                    <span>BuktiPulih</span>
+                  </div>
+                  <p style={{ margin: "4px 0 8px 0", fontSize: "12.5px", fontWeight: 700, color: "#F59E0B", letterSpacing: "0.2px" }}>
+                    {language === "en" ? "Trace the Tracks, Safeguard Restoration." : "Pantau Jejak, Kawal Pemulihan."}
+                  </p>
+                  <p style={{ lineHeight: 1.6, maxWidth: "380px", color: "rgba(244, 241, 233, 0.82)", fontSize: "13px" }}>
+                    {language === "en"
+                      ? "Participatory grassroots platform for open wildfire monitoring and documented peatland recovery."
+                      : "Platform partisipatif warga untuk pemantauan karhutla terbuka dan dokumentasi nyata pemulihan lahan pasca-bencana."}
+                  </p>
+                </div>
+
+                <div>
+                  <div style={{ color: "#F4F1E9", fontWeight: 700, marginBottom: "8px" }}>
+                    Navigasi Portal
+                  </div>
+                  <ul style={{ listStyle: "none", lineHeight: 1.8, padding: 0 }}>
+                    <li>
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", color: "rgba(244, 241, 233, 0.85)", cursor: "pointer", padding: 0 }}
+                        onClick={() => setActivePortalTab("fire")}
+                      >
+                        · Pantau Karhutla & Asap (BNPB)
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", color: "rgba(244, 241, 233, 0.85)", cursor: "pointer", padding: 0 }}
+                        onClick={() => setActivePortalTab("recovery")}
+                      >
+                        · Peta Kawasan Bukti Pulih
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", color: "rgba(244, 241, 233, 0.85)", cursor: "pointer", padding: 0 }}
+                        onClick={() => setActivePortalTab("forum")}
+                      >
+                        · Ruang Suara Hijau (Kiriman Warga)
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div style={{ color: "#F4F1E9", fontWeight: 700, marginBottom: "8px" }}>
+                    {language === "en" ? "Contact & Inquiries" : "Kontak"}
+                  </div>
+                  <p style={{ lineHeight: 1.6, color: "rgba(244, 241, 233, 0.82)", marginBottom: "12px", fontSize: "13px", maxWidth: "320px" }}>
+                    {language === "en"
+                      ? "Field coordination, volunteer network, and restoration inquiries:"
+                      : "Informasi kegiatan, narahubung relawan, dan publikasi posko pemulihan:"}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-start" }}>
+                    <a
+                      href="mailto:kontak@buktipulih.id"
+                      className="footer-instagram-link"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        color: "#F4F1E9",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        padding: "7px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(244, 241, 233, 0.1)",
+                        border: "1px solid rgba(244, 241, 233, 0.2)",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                      <span>kontak@buktipulih.id</span>
+                    </a>
+
+                    <a
+                      href="https://instagram.com/uinicyogyakarta"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="footer-instagram-link"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        color: "#F4F1E9",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        padding: "7px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(244, 241, 233, 0.1)",
+                        border: "1px solid rgba(244, 241, 233, 0.2)",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                      </svg>
+                      <span>@uinicyogyakarta</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="footer-bottom">
+                <div>© 2026 BuktiPulih · Pantau Jejak, Kawal Pemulihan · All Rights Reserved</div>
+                <div style={{ color: "rgba(244, 241, 233, 0.72)" }}>
+                  bukti pulih datang dari mereka yang merawat di lapangan
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* pita ukiran garis lanskap pemulihan gaya calsum */}
-        <div className="footer-engraving-banner">
-          <img
-            src="/footer-woodcut-engraving.jpg"
-            alt="Ilustrasi ukiran garis pemulihan ekosistem gambut dan reboisasi pohon pasca-karhutla"
-            className="footer-engraving-img"
-            loading="lazy"
-          />
-        </div>
-      </footer>
+      </footer>}
     </div>
   );
 }

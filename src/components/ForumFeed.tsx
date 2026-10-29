@@ -1,294 +1,168 @@
-// src/components/ForumFeed.tsx
-// -> komponen feed forum partisipasi publik bergaya tumblr (tumblr-style masonry feed)
-//      -> kartu postingan dengan skala rasio foto alami (square, portrait, landscape)
-//      -> filter bar: terbaru, paling disukai, terbanyak komentar, paling banyak dilihat
-//      -> tombol interaksi suka (like) cepat, metrik views, dan tombol '+' buat posting baru
-
+// Show and filter resident field notes.
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
-import { ForumPost } from "@/types";
-import { formatId, REGION_TABS, RegionKey } from "@/utils/plotDisplay";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ForumPost } from "@/types";
+import { initialForumPosts } from "@/data/forumPostsData";
+import { FORUM_PAGE_SIZE, getSortedPosts, type SortCriteria } from "@/utils/forumDisplay";
+import { REGION_TABS } from "@/utils/plotDisplay";
+import { ForumPostCard } from "./forum/ForumPostCard";
+import { useDoubleSwipe } from "./forum/useDoubleSwipe";
+import type { useForumPosts } from "./forum/useForumPosts";
+import { useMasonry } from "./forum/useMasonry";
+import styles from "./forum/forum.module.css";
 
 interface ForumFeedProps {
   posts: ForumPost[];
+  source: ReturnType<typeof useForumPosts>;
   onOpenPostDetail?: (post: ForumPost) => void;
-  onOpenCreatePost: () => void;
   onToggleLike: (postId: string) => void;
-  selectedPlotFilter?: string;
   selectedRegionFilter?: string;
+  selectedPlotFilter?: string;
   onSelectRegionFilter?: (region: string) => void;
+  language?: "id" | "en";
 }
 
-import { getSortedPosts, SortCriteria } from "@/utils/forumDisplay";
+const publishedIds = new Set(initialForumPosts.map((post) => post.id));
 
 export const ForumFeed: React.FC<ForumFeedProps> = ({
-  posts,
-  onOpenPostDetail,
-  onOpenCreatePost,
-  onToggleLike,
-  selectedRegionFilter,
-  onSelectRegionFilter,
+  posts, source, onOpenPostDetail, onToggleLike,
+  selectedRegionFilter, onSelectRegionFilter, language = "id",
 }) => {
   const [currentSort, setCurrentSort] = useState<SortCriteria>("latest");
-  const [localRegionFilter, setLocalRegionFilter] = useState<string>("all");
-
-  const activeRegion = selectedRegionFilter !== undefined ? selectedRegionFilter : localRegionFilter;
-
-  const handleRegionChange = (newRegion: string) => {
-    setLocalRegionFilter(newRegion);
-    if (onSelectRegionFilter) {
-      onSelectRegionFilter(newRegion);
-    }
+  const [localRegion, setLocalRegion] = useState("all");
+  const [query, setQuery] = useState("");
+  const region = selectedRegionFilter ?? localRegion;
+  const copy = language === "id" ? {
+    title: "Ruang Suara Hijau",
+    search: "Cari pemulihan",
+    searchLabel: "Cari pemulihan",
+    all: "Semua wilayah",
+    region: "Wilayah",
+    latest: "Terbaru",
+    likes: "Disukai",
+    comments: "Komentar",
+    views: "Dilihat",
+    sort: "Urutan",
+    reset: "Hapus filter",
+    emptyTitle: "Belum ada catatan yang cocok",
+    emptyText: "Coba kata kunci atau wilayah lain.",
+  } : {
+    title: "Green Voices",
+    search: "Search restoration",
+    searchLabel: "Search restoration",
+    all: "All regions",
+    region: "Region",
+    latest: "Latest",
+    likes: "Most liked",
+    comments: "Comments",
+    views: "Views",
+    sort: "Sort by",
+    reset: "Clear filters",
+    emptyTitle: "No posts match these filters",
+    emptyText: "Try another search or region.",
   };
-
-  // hitung jumlah postingan per wilayah secara dinamis
-  const regionCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: posts.length };
-    REGION_TABS.forEach((tab) => {
-      if (tab.key === "all") return;
-      const provLower = tab.province.toLowerCase();
-      counts[tab.key] = posts.filter(
-        (p) =>
-          p.region_key === tab.key ||
-          (provLower && p.location_name.toLowerCase().includes(provLower))
-      ).length;
-    });
-    return counts;
-  }, [posts]);
-
-  const displayPosts = getSortedPosts(posts, activeRegion, currentSort);
-  const currentRegionTab = REGION_TABS.find((t) => t.key === activeRegion);
-
-  const totalVerificationsInRegion = useMemo(() => {
-    return displayPosts.reduce((acc, p) => acc + (p.field_verifications?.length || 0), 0);
-  }, [displayPosts]);
+  const changeRegion = (value: string) => {
+    setLocalRegion(value);
+    onSelectRegionFilter?.(value);
+  };
+  const displayPosts = useMemo(() => getSortedPosts(posts, region, currentSort, query), [posts, region, currentSort, query]);
+  const regionCounts = useMemo(() => Object.fromEntries(
+    REGION_TABS.map((tab) => [tab.key, tab.key === "all" ? posts.length : getSortedPosts(posts, tab.key, "latest").length]),
+  ), [posts]);
+  const hasFilters = region !== "all" || Boolean(query.trim());
+  const clearFilters = () => { changeRegion("all"); setQuery(""); };
 
   return (
-    <section className="forum-pulih-section" aria-labelledby="forum-pulih-title">
-      {/* baris judul & tombol tambah kiriman ----------------------------------- */}
-      <div className="forum-header-bar">
-        <div>
-          <span className="live-status-pill purple">
-            <span className="pulse-dot purple"></span>
-            jurnal kiriman warga & relawan
-          </span>
-          <h2 id="forum-pulih-title" className="section-title-large">
-            Forum Pulih: Catatan Partisipasi Lapangan
-          </h2>
-          <p className="section-subtitle-text">
-            Dokumentasi foto dan catatan langsung dari warga desa dan relawan di lapangan (rumah warga, jembatan, fasilitas umum, kebun, maupun lahan gambut). Laporkan perkembangan atau periksa pemulihan di wilayah Anda.
-          </p>
-        </div>
+    <section className={styles.section} aria-labelledby="forum-pulih-title">
+      <header className={styles.header}>
+        <h2 className={styles.title} id="forum-pulih-title">{copy.title}</h2>
+      </header>
 
-        <div>
-          <button
-            type="button"
-            className="btn-create-post"
-            onClick={onOpenCreatePost}
-          >
-            <span className="btn-plus-icon">+</span>
-            <span>Posting Bukti Baru</span>
-          </button>
-        </div>
+      <div className={styles.filters}>
+        <label className={styles.inputWrap}>
+          <span className={styles.visuallyHidden}>{copy.searchLabel}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></svg>
+          <input className={styles.input} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+            placeholder={copy.search} aria-label={copy.searchLabel} />
+        </label>
+        <label>
+          <span className={styles.visuallyHidden}>{copy.region}</span>
+          <select className={styles.select} value={region} onChange={(event) => changeRegion(event.target.value)} aria-label={copy.region}>
+            <option value="all">{copy.all} ({regionCounts.all})</option>
+            {REGION_TABS.filter((tab) => tab.key !== "all").map((tab) => (
+              <option key={tab.key} value={tab.key} title={tab.label}>{tab.label.split(" (")[0]} ({regionCounts[tab.key] ?? 0})</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className={styles.visuallyHidden}>{copy.sort}</span>
+          <select className={styles.select} value={currentSort} onChange={(event) => setCurrentSort(event.target.value as SortCriteria)} aria-label={copy.sort}>
+            <option value="latest">{copy.latest}</option>
+            <option value="likes">{copy.likes}</option>
+            <option value="comments">{copy.comments}</option>
+            <option value="views">{copy.views}</option>
+          </select>
+        </label>
       </div>
 
-      {/* filter bar ringkas & terpadu (anti-slop control bar) ---------------- */}
-      <div className="forum-control-bar">
-        <div className="control-bar-filters">
-          {/* filter dropdown wilayah */}
-          <div className="control-select-group">
-            <label htmlFor="forum-region-select" className="control-label">Wilayah</label>
-            <select
-              id="forum-region-select"
-              className="control-select"
-              value={activeRegion}
-              onChange={(e) => handleRegionChange(e.target.value)}
-            >
-              <option value="all">Semua Wilayah ({posts.length})</option>
-              {REGION_TABS.filter((t) => t.key !== "all").map((tab) => (
-                <option key={tab.key} value={tab.key}>
-                  {tab.label} ({regionCounts[tab.key] || 0})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      {hasFilters && <div className={styles.filterActions}>
+        <button type="button" className={styles.reset} onClick={clearFilters}>{copy.reset}</button>
+      </div>}
 
-        {/* segmented sort toggle */}
-        <div className="control-sort-group" role="tablist" aria-label="Kriteria Urutan">
-          <span className="control-label">Urutan</span>
-          <div className="control-sort-segmented">
-            <button
-              type="button"
-              className={`sort-seg-btn ${currentSort === "latest" ? "active" : ""}`}
-              onClick={() => setCurrentSort("latest")}
-            >
-              Terbaru
-            </button>
-            <button
-              type="button"
-              className={`sort-seg-btn ${currentSort === "likes" ? "active" : ""}`}
-              onClick={() => setCurrentSort("likes")}
-            >
-              Terpopuler
-            </button>
-            <button
-              type="button"
-              className={`sort-seg-btn ${currentSort === "comments" ? "active" : ""}`}
-              onClick={() => setCurrentSort("comments")}
-            >
-              Komentar
-            </button>
-          </div>
-        </div>
-      </div>
+      <PagedPosts key={`${region}:${currentSort}:${query.trim().toLocaleLowerCase("id-ID")}`}
+        posts={displayPosts} source={source} complete={region !== "all" || currentSort !== "latest" || Boolean(query.trim())}
+        language={language} onOpenPostDetail={onOpenPostDetail} onToggleLike={onToggleLike} emptyTitle={copy.emptyTitle} emptyText={copy.emptyText} />
 
-      {/* strip informasi kontekstual wilayah terpilih --------------------------- */}
-      {activeRegion !== "all" && (
-        <div className="forum-region-banner">
-          <div className="forum-region-banner-info">
-            <span className="forum-region-banner-badge">
-              {currentRegionTab
-                ? `FOKUS WILAYAH: ${currentRegionTab.label.toUpperCase()}`
-                : "SEMUA WILAYAH"}
-            </span>
-            <p className="forum-region-banner-desc">
-              Menampilkan {displayPosts.length} catatan partisipasi warga
-              {currentRegionTab ? ` dan ${totalVerificationsInRegion} log verifikasi fisik di ${currentRegionTab.province}` : ""}.
-            </p>
-          </div>
-          <div className="forum-banner-actions">
-            <button
-              type="button"
-              className="btn-region-reset"
-              onClick={() => handleRegionChange("all")}
-              aria-label="Kembali ke semua wilayah"
-            >
-              Semua Wilayah ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* kotak pesan jika nihil hasil filter ----------------------------------- */}
-      {displayPosts.length === 0 ? (
-        <div className="forum-empty-box">
-          <p className="forum-empty-title">Belum ada catatan yang sesuai dengan filter ini</p>
-          <p className="forum-empty-desc">
-            Coba pilih wilayah lain atau kembali ke seluruh wilayah untuk melihat bukti pemulihan warga.
-          </p>
-          <button
-            type="button"
-            className="btn-region-reset"
-            onClick={() => handleRegionChange("all")}
-          >
-            Tampilkan Semua Wilayah
-          </button>
-        </div>
-      ) : (
-        <div className="tumblr-masonry-grid">
-          {displayPosts.map((post) => {
-            const initials =
-              post.author.username
-                .split(" ")
-                .filter(Boolean)
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase() || "W";
-
-            return (
-              <article key={post.id} className="tumblr-card">
-                {/* 1. header warga (tumblr style di bagian paling atas) */}
-                <div className="tumblr-card-header">
-                  <div className="tumblr-author-box">
-                    <div className="tumblr-avatar">{initials}</div>
-                    <div className="tumblr-author-meta">
-                      <div className="tumblr-author-name-row">
-                        <span className="tumblr-author-name">{post.author.username}</span>
-                        <span className="tumblr-post-time">{post.time_ago}</span>
-                      </div>
-                      <span className="tumblr-author-sub">
-                        {post.author.age} th · {post.author.city}
-                      </span>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/forum/${post.id}`}
-                    className="tumblr-more-btn"
-                    aria-label={`Buka detail catatan ${post.author.username}`}
-                  >
-                    ···
-                  </Link>
-                </div>
-
-                {/* 2. baris lokasi objek pemulihan */}
-                <div className="tumblr-location-row">
-                  <span className="tumblr-location-pin">📍</span>
-                  <span className="tumblr-location-name">{post.location_name}</span>
-                </div>
-
-                {/* 3. media foto skala alami tanpa crop dan tanpa badge teknis */}
-                {post.media?.url && (
-                  <Link
-                    href={`/forum/${post.id}`}
-                    className="tumblr-media-link"
-                    aria-label={`Buka foto penuh dokumentasi ${post.author.username}`}
-                  >
-                    <img
-                      src={post.media.url}
-                      alt={`Dokumentasi lapangan oleh ${post.author.username}`}
-                      className="tumblr-media-img"
-                      loading="lazy"
-                    />
-                  </Link>
-                )}
-
-                {/* 4. catatan lapangan warga (fleksibel mengikuti panjang teks) */}
-                <div className="tumblr-card-body">
-                  <Link href={`/forum/${post.id}`} className="tumblr-caption-link">
-                    <p className="tumblr-caption-text">{post.caption}</p>
-                  </Link>
-                </div>
-
-                {/* 5. footer aksi interaksi tumblr */}
-                <div className="tumblr-card-footer">
-                  <div className="interaction-left">
-                    <button
-                      type="button"
-                      className={`btn-like-pill ${post.metrics.user_has_liked ? "liked" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        onToggleLike(post.id);
-                      }}
-                      aria-label="Sukai catatan ini"
-                    >
-                      <span className="like-icon">♥</span>
-                      <span>{formatId(post.metrics.likes)}</span>
-                    </button>
-
-                    <Link
-                      href={`/forum/${post.id}#comments-section`}
-                      className="btn-comment-indicator"
-                      aria-label="Lihat komentar warga"
-                    >
-                      <span className="comment-icon">💬</span>
-                      <span>{post.metrics.comments_count}</span>
-                    </Link>
-                  </div>
-
-                  <span className="views-count-text">
-                    {formatId(post.metrics.views)} tayangan
-                  </span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
     </section>
   );
 };
+
+// Keep already shown cards in the DOM; each action extends the visible batch.
+function PagedPosts({ posts, source, complete, language, onOpenPostDetail, onToggleLike, emptyTitle, emptyText }:
+  Pick<ForumFeedProps, "posts" | "source" | "onOpenPostDetail" | "onToggleLike"> & { complete: boolean; language: "id" | "en"; emptyTitle: string; emptyText: string }) {
+  const [limit, setLimit] = useState(FORUM_PAGE_SIZE);
+  const marker = useRef<HTMLDivElement>(null);
+  const focusIndex = useRef<number | null>(null);
+  const { loading, error, hasMore, boundary, loadMore } = source;
+  // Older local examples must not appear ahead of unread server pages.
+  const eligible = hasMore && !complete && boundary ? posts.filter(post => post.created_at >= boundary) : posts;
+  const visible = eligible.slice(0, limit);
+  const masonryRef = useMasonry(visible.map(post => post.id));
+  const more = hasMore || eligible.length > limit;
+  const busy = loading || (complete && hasMore && !error);
+  const advance = useCallback(() => setLimit(value => value + FORUM_PAGE_SIZE), []);
+  const gestures = useDoubleSwipe(marker, more && !busy && !error, advance);
+
+  useEffect(() => {
+    if (!loading && !error && hasMore && (complete || eligible.length < limit)) void loadMore(complete);
+  }, [loading, error, hasMore, complete, eligible.length, limit, loadMore]);
+  useEffect(() => {
+    if (focusIndex.current === null || visible.length <= focusIndex.current) return;
+    const card = masonryRef.current?.children[focusIndex.current];
+    card?.querySelector<HTMLElement>("a, button")?.focus({ preventScroll: true });
+    focusIndex.current = null;
+  }, [visible.length, masonryRef]);
+
+  return <>
+    {visible.length === 0 && !busy && !error && !hasMore ? <div className={styles.empty}><strong>{emptyTitle}</strong><p>{emptyText}</p></div> : null}
+    <div ref={masonryRef} className={styles.grid} aria-busy={busy}>
+      {visible.map(post => <ForumPostCard key={post.id} post={post} language={language} published={publishedIds.has(post.id) || post.persisted === true}
+        onOpen={onOpenPostDetail} onToggleLike={onToggleLike} />)}
+    </div>
+    {(more || busy || error) && <div ref={marker} className={styles.pagination}>
+      {error ? <><p role="alert">{language === "id" ? "Posting belum dapat dimuat." : "Could not load posts."}</p>
+        <button className={styles.loadMore} type="button" onClick={() => { gestures.reset(); void loadMore(complete); }}>{language === "id" ? "Coba lagi" : "Try again"}</button></>
+        : <>
+          <p className={styles.swipeHint} role="status">{busy ? (language === "id" ? "Memuat..." : "Loading...") : language === "id"
+            ? gestures.swipes ? "Gulir sekali lagi untuk memuat posting." : "Gulir 2 kali untuk memuat posting."
+            : gestures.swipes ? "Scroll once more to load posts." : "Scroll twice to load posts."}</p>
+          <button className={`${styles.loadMore} ${styles.desktopLoad}`} type="button" disabled={busy}
+            onClick={() => { focusIndex.current = visible.length; gestures.reset(); advance(); }}>
+            {busy ? (language === "id" ? "Memuat..." : "Loading...") : "Load more"}
+          </button>
+        </>}
+    </div>}
+    <span className={styles.visuallyHidden} role="status">{visible.length} {language === "id" ? "posting ditampilkan" : "posts shown"}</span>
+  </>;
+}

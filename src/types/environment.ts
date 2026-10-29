@@ -1,10 +1,16 @@
 // Data used by the homepage map and forecast. Coordinates use latitude, longitude.
 export type MapBounds = [number, number, number, number];
+export interface HotspotTimeRange { start:number; end:number }
+export interface HotspotAvailability {
+  sources:{name:string;min_date:string;max_date:string}[];
+  fetched_at:string;
+  status:"complete"|"cached";
+}
 export interface HotspotObservation {
   id: string;
   coordinates: [number, number];
   observed_at: string;
-  satellite: "VIIRS_NOAA20_NRT" | "VIIRS_NOAA21_NRT";
+  satellite: "VIIRS_NOAA20_NRT" | "VIIRS_NOAA21_NRT" | "VIIRS_NOAA20_SP" | "VIIRS_NOAA21_SP";
   confidence: "low" | "nominal" | "high";
   frp_mw: number | null;
 }

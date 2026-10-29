@@ -1,412 +1,267 @@
-// src/components/RecoveryMap.tsx
-// -> komponen peta kawasan pemulihan pasca-karhutla (menu bukti pulih)
-//      -> petak pemulihan gambut & hutan kota di 6 provinsi prioritas bnpb & bekasi
-//      -> visualisasi tingkat hidup bibit (survival rate) dan sekat kanal pembasahan gambut
-//      -> integrasi filter geospasial lintas provinsi dengan flyTo presisi
-//      -> bottom sheet interaktif untuk melihat progres revegetasi fisik
-
+// Explore recovery plots and load history only when a plot is selected.
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { PlotFeature, PlotFeatureCollection } from "@/types";
-import {
-  RegionKey,
-  REGION_TABS,
-  REGION_COORDINATES,
-  matchRegion,
-  formatId,
-} from "@/utils/plotDisplay";
-import {
-  peatHydrologicalUnitsData,
-  PeatHydrologicalUnitProperties,
-} from "@/data/peatHydrologicalUnitsData";
-import { PlotBottomSheet } from "./PlotBottomSheet";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import type { PlotFeatureCollection, TimelineItem, TreeStatus, RecoveryReport } from "@/types";
+import { REGION_TABS, REGION_COORDINATES, matchRegion, type RegionKey } from "@/utils/plotDisplay";
+import { getRecoveryHistoryApi } from "@/services/api";
+import { MapIcon } from "./hazards/MapIcon";
+import { useRecoveryReports } from "./recovery/useRecoveryReports";
+import { RecoveryReportDetail } from "./recovery/RecoveryReportDetail";
+import { CONDITION_LABELS } from "@/utils/recoveryEvidence";
+import { RecoveryDetail } from "./recovery/RecoveryDetail";
+import styles from "./recovery/recovery-map.module.css";
 
 interface RecoveryMapProps {
   plots: PlotFeatureCollection;
+  loading: boolean;
+  sample: boolean;
   selectedRegion: string;
-  onSelectRegion: (key: string) => void;
-  onNavigateToForumWithPlot?: (plotCode: string) => void;
+  onSelectRegion: (region: string) => void;
+  selectedPlotId: string | null;
+  onSelectPlot: (id: string | null) => void;
+  selectedReportId: string | null;
+  onSelectReport: (id: string | null) => void;
+  language: "id" | "en";
+}
+const COLORS: Record<TreeStatus, string> = { subur: "#2d6548", perlu_rawat: "#ad6818", kritis: "#bb412d", mati: "#69706a" };
+const STATUS = CONDITION_LABELS;
+function clusterIcon(cluster: L.MarkerCluster, en = false, reports = false) {
+  const count = cluster.getChildCount();
+  cluster.options.title = count + " " + (reports ? (en ? "reports" : "laporan warga") : (en ? "plots" : "petak"));
+  return L.divIcon({ className: styles.cluster + (reports ? " " + styles.reportCluster : ""), html: "<span>" + count + "</span>", iconSize: [48, 48] });
+}
+const position = (coordinates: number[]): L.LatLngTuple => [coordinates[1], coordinates[0]];
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function pinIcon(status: TreeStatus, selected: boolean) {
+  return L.divIcon({
+    className: styles.pin + (selected ? " " + styles.selected : ""),
+    html: '<svg width="32" height="40" viewBox="0 0 32 40" aria-hidden="true"><path d="M16 38C12 32 2 23 2 15a14 14 0 0 1 28 0c0 8-10 17-14 23Z" fill="' + COLORS[status] + '" stroke="#fffdf7" stroke-width="2.5"/><circle cx="16" cy="15" r="4.5" fill="#fffdf7"/></svg>',
+    iconSize: [44, 48], iconAnchor: [22, 44],
+  });
 }
 
-// helper --------------------------------------------------------------------------
-// function penentu warna pin status pemulihan pohon
-function getRecoveryMarkerColor(status: string): string {
-  if (status === "subur") return "#0E753B"; // hijau stempel subur
-  if (status === "perlu_rawat") return "#D97706"; // kuning perhatian
-  return "#DC2626"; // merah kritis
+function reportIcon(selected: boolean) {
+  return L.divIcon({ className: styles.reportPin + (selected ? " " + styles.selectedReport : ""),
+    html: '<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="#fff9ef" stroke="#ad5a24" stroke-width="3" stroke-dasharray="3 2"/><path d="M11 10h10v12H11zM14 14h4m-4 4h4" fill="none" stroke="#ad5a24" stroke-width="1.6"/></svg>',
+    iconSize: [44, 44], iconAnchor: [22, 22],
+  });
 }
 
-// function uji titik berada di dalam poligon (ray-casting algorithm)
-// input param : point [lat, lng], polygon [[lat, lng], ...]
-// output : boolean (true jika titik berada di dalam kawasan khg)
-function isPointInPolygon(point: [number, number], polygon: number[][]): boolean {
-  const [lat, lng] = point;
-  let inside = false;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i][1], yi = polygon[i][0];
-    const xj = polygon[j][1], yj = polygon[j][0];
-    const intersect = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
-    if (intersect) inside = !inside;
-  }
-  return inside;
-}
-// end of helper ------------------------------------------------------------------
+export function RecoveryMap({ plots, loading, sample, selectedRegion, onSelectRegion, selectedPlotId, onSelectPlot, selectedReportId, onSelectReport, language }: RecoveryMapProps) {
+  const en = language === "en", t = (id: string, english: string) => en ? english : id;
+  const shell = useRef<HTMLElement>(null), canvas = useRef<HTMLDivElement>(null), panel = useRef<HTMLElement>(null);
+  const mapRef = useRef<L.Map | null>(null), clustersRef = useRef<L.MarkerClusterGroup | null>(null);
+  const markers = useRef(new Map<string, L.Marker>()), filterButton = useRef<HTMLButtonElement>(null);
+  const reportClusters = useRef<L.MarkerClusterGroup | null>(null), reportMarkers = useRef(new Map<string, L.Marker>());
+  const [bounds, setBounds] = useState("95,-11,141,6"), [layer, setLayer] = useState("all");
+  const [expanded, setExpanded] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false), [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all"), [ecosystem, setEcosystem] = useState("all");
+  const [fullscreen, setFullscreen] = useState(false), [mapError, setMapError] = useState(false);
+  const [history, setHistory] = useState<{ code: string; items: TimelineItem[]; hasMore: boolean; failed: boolean } | null>(null);
+  const [historyRequest, setHistoryRequest] = useState({ code: "", page: 1 }), [historyPending, setHistoryPending] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const filtered = useMemo(() => layer === "reports" ? [] : plots.features.filter(plot => {
+    const p = plot.properties;
+    return matchRegion(p.region, selectedRegion) && (status === "all" || p.latest_status === status)
+      && (ecosystem === "all" || p.ecosystem_type === ecosystem)
+      && (p.name + " " + p.plot_code + " " + p.region + " " + p.community_name).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
+  }), [plots, selectedRegion, status, ecosystem, query, layer]);
+  const reports = useRecoveryReports(bounds, selectedRegion, status, ecosystem, selectedReportId, layer !== "plots");
+  const matchesReport = useCallback((report: RecoveryReport) => layer !== "plots" && (selectedRegion === "all" || report.region_key === selectedRegion)
+    && (status === "all" || report.condition === status) && (ecosystem === "all" || report.ecosystem_type === ecosystem)
+    && (report.location_name + " " + report.caption).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()), [layer, selectedRegion, status, ecosystem, query]);
+  const filteredReports = useMemo(() => reports.items.filter(matchesReport), [reports.items, matchesReport]);
+  const selectedReport = reports.selected && matchesReport(reports.selected) ? reports.selected : null;
+  const selected = selectedReportId ? null : filtered.find(plot => plot.id === selectedPlotId) ?? null;
+  const hasDetail = !!selected || !!selectedReport;
+  const selectedId = selected?.id, selectedCode = selected?.properties.plot_code;
+  const historyPage = historyRequest.code === selectedCode ? historyRequest.page : 1;
+  const select = useEffectEvent((id: string) => { setFiltersOpen(false); onSelectPlot(id); });
+  const selectReport = useEffectEvent((id: string) => { setFiltersOpen(false); onSelectReport(id); });
+  const filterCount = Number(layer !== "all") + Number(selectedRegion !== "all") + Number(status !== "all") + Number(ecosystem !== "all") + Number(!!query.trim());
 
-export const RecoveryMap: React.FC<RecoveryMapProps> = ({
-  plots,
-  selectedRegion,
-  onSelectRegion,
-  onNavigateToForumWithPlot,
-}) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const khgLayersRef = useRef<L.LayerGroup | null>(null);
-
-  const [selectedPlot, setSelectedPlot] = useState<PlotFeature | null>(
-    plots.features[0] || null
-  );
-  const [showKhgLayer, setShowKhgLayer] = useState<boolean>(true);
-
-  // deteksi apakah petak yang dipilih berada di dalam zona khg brgm
-  const selectedPlotKhg = useMemo<PeatHydrologicalUnitProperties | null>(() => {
-    if (!selectedPlot) return null;
-    const [lng, lat] = selectedPlot.geometry.coordinates;
-    for (const feat of peatHydrologicalUnitsData.features) {
-      const poly = feat.geometry.coordinates[0];
-      if (isPointInPolygon([lat, lng], poly)) {
-        return feat.properties;
-      }
-    }
-    return null;
-  }, [selectedPlot]);
-
-  // penyaringan daftar petak berdasarkan wilayah yang dipilih
-  const filteredPlots = useMemo(() => {
-    return plots.features.filter((p) => matchRegion(p.properties.region, selectedRegion));
-  }, [plots, selectedRegion]);
-
-  // kalkulasi metrik ringkasan wilayah pemulihan aktif
-  const regionStats = useMemo(() => {
-    const totalPlots = filteredPlots.length;
-    const totalPlanted = filteredPlots.reduce((sum, p) => sum + p.properties.total_planted, 0);
-    const totalAlive = filteredPlots.reduce((sum, p) => sum + p.properties.current_alive, 0);
-    const avgSurvival =
-      totalPlanted > 0 ? ((totalAlive / totalPlanted) * 100).toFixed(1) : "0.0";
-    const suburCount = filteredPlots.filter((p) => p.properties.latest_status === "subur").length;
-
-    const currentTab = REGION_TABS.find((t) => t.key === selectedRegion) || REGION_TABS[0];
-
-    return {
-      totalPlots,
-      totalPlanted,
-      totalAlive,
-      avgSurvival,
-      suburCount,
-      provinceLabel: currentTab.label,
-      isGambut: selectedRegion !== "bekasi",
-    };
-  }, [filteredPlots, selectedRegion]);
-
-  // inisialisasi peta leaflet -----------------------------------------------------
   useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: [-1.5, 112.0],
-        zoom: 5,
-        zoomControl: true,
-        scrollWheelZoom: false,
-      });
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 18,
-      }).addTo(map);
-
-      // layer group untuk poligon khg brgm
-      const khgGroup = L.layerGroup().addTo(map);
-      khgLayersRef.current = khgGroup;
-
-      // layer group untuk marker petak pemulihan
-      const markersGroup = L.layerGroup().addTo(map);
-      markersLayerRef.current = markersGroup;
-      mapInstanceRef.current = map;
-    }
-
+    if (!canvas.current) return;
+    const markerIndex = markers.current;
+    const map = L.map(canvas.current, { zoomControl: false, minZoom: 3, maxZoom: 18, preferCanvas: true, maxBounds: [[-85, -180], [85, 180]], maxBoundsViscosity: 1,
+      zoomAnimation: !reducedMotion(), fadeAnimation: false, markerZoomAnimation: false }).setView([-2, 113], 5);
+    mapRef.current = map;
+    const tiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "Tiles &copy; Esri", maxZoom: 18, noWrap: true, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 1,
+    }).addTo(map);
+    tiles.on("tileerror", () => setMapError(true));
+    tiles.on("tileload", () => setMapError(false));
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+    L.control.scale({ position: "bottomright", imperial: false }).addTo(map);
+    clustersRef.current = L.markerClusterGroup({
+      maxClusterRadius: 60, showCoverageOnHover: false, animate: false, chunkedLoading: true,
+      chunkInterval: 8, chunkDelay: 16, spiderfyOnMaxZoom: true,
+      iconCreateFunction: cluster => clusterIcon(cluster),
+    }).addTo(map);
+    reportClusters.current = L.markerClusterGroup({ maxClusterRadius: 60, showCoverageOnHover: false, animate: false,
+      chunkedLoading: true, chunkInterval: 8, chunkDelay: 16, iconCreateFunction: cluster => clusterIcon(cluster, false, true),
+    }).addTo(map);
+    let boundsTimer = 0;
+    const updateBounds = () => {
+      const box = map.getBounds();
+      const coordinates = [Math.max(-180, box.getWest()), Math.max(-90, box.getSouth()), Math.min(180, box.getEast()), Math.min(90, box.getNorth())];
+      if (coordinates[0] < coordinates[2] && coordinates[1] < coordinates[3]) setBounds(coordinates.map(value => value.toFixed(5)).join(","));
+    };
+    map.on("moveend", () => { clearTimeout(boundsTimer); boundsTimer = window.setTimeout(updateBounds, 150); });
+    const frame = requestAnimationFrame(updateBounds);
+    const reportIndex = reportMarkers.current;
+    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    observer.observe(canvas.current);
+    const onFullscreen = () => setFullscreen(document.fullscreenElement === shell.current);
+    document.addEventListener("fullscreenchange", onFullscreen);
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      cancelAnimationFrame(frame); reportIndex.clear(); reportClusters.current = null;
+      observer.disconnect(); document.removeEventListener("fullscreenchange", onFullscreen);
+      // Leaflet 1.9.4 leaves a zoom completion timer alive after removal.
+      (map as L.Map & { _animatingZoom?: boolean })._animatingZoom = false;
+      map.remove(); mapRef.current = null; clustersRef.current = null; markerIndex.clear();
+      // Removing an animated map can emit moveend and schedule one last update.
+      clearTimeout(boundsTimer);
     };
   }, []);
 
-  // render layer poligon kesatuan hidrologis gambut (khg) brgm -------------------
   useEffect(() => {
-    const khgGroup = khgLayersRef.current;
-    if (!khgGroup) return;
+    const group = clustersRef.current;
+    if (!group) return;
+    group.clearLayers(); markers.current.clear();
+    (group.options as L.MarkerClusterGroupOptions).iconCreateFunction = cluster => clusterIcon(cluster, en);
+    group.addLayers(filtered.map(plot => {
+      const label = plot.properties.name + " · " + STATUS[plot.properties.latest_status][en ? 1 : 0];
+      const marker = L.marker(position(plot.geometry.coordinates), {
+        icon: pinIcon(plot.properties.latest_status, false), title: label, alt: label, riseOnHover: true,
+      }).on("click", () => select(plot.id));
+      markers.current.set(plot.id, marker);
+      return marker;
+    }));
+  }, [filtered, en]);
 
-    khgGroup.clearLayers();
-    if (!showKhgLayer) return;
-
-    peatHydrologicalUnitsData.features.forEach((feature) => {
-      const isLindung = feature.properties.fungsi_ekosistem.includes("Fungsi Lindung");
-      const latLngs: [number, number][] = feature.geometry.coordinates[0].map((coord) => [
-        coord[1],
-        coord[0],
-      ]);
-
-      const polygon = L.polygon(latLngs, {
-        color: isLindung ? "#0D9488" : "#D97706",
-        weight: 2,
-        dashArray: isLindung ? undefined : "4, 4",
-        fillColor: isLindung ? "#14B8A6" : "#F59E0B",
-        fillOpacity: 0.16,
-      });
-
-      const popupContent = `
-        <div style="font-family: inherit; font-size: 12px; color: #1E293B; min-width: 230px; line-height: 1.45;">
-          <div style="font-weight: 800; font-size: 13px; color: ${isLindung ? "#0D9488" : "#D97706"}; margin-bottom: 3px;">
-            ${feature.properties.nama_khg}
-          </div>
-          <div style="font-size: 10.5px; color: #64748B; margin-bottom: 8px;">
-            SK MenLHK: ${feature.properties.sk_menlhk}
-          </div>
-          <div style="background: rgba(14, 117, 59, 0.08); padding: 5px 8px; border-radius: 4px; margin-bottom: 6px;">
-            <strong>Fungsi:</strong> ${feature.properties.fungsi_ekosistem}
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px;">
-            <div>Kedalaman: <strong>${feature.properties.kedalaman_rata_m}m</strong></div>
-            <div>Luas: <strong>${feature.properties.luas_ha.toLocaleString("id-ID")} Ha</strong></div>
-          </div>
-          <div style="margin-top: 6px; font-size: 10.5px; color: #475569; border-top: 1px solid #E2E8F0; padding-top: 5px;">
-            Ambang Kritis BRGM: <strong>${feature.properties.ambang_muka_air_cm} cm</strong>
-          </div>
-        </div>
-      `;
-
-      polygon.bindPopup(popupContent);
-      khgGroup.addLayer(polygon);
-    });
-  }, [showKhgLayer]);
-
-  // render pin marker petak pemulihan saat filter atau data berubah ---------------
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    const markersGroup = markersLayerRef.current;
-    if (!map || !markersGroup) return;
+    const group = reportClusters.current;
+    if (!group) return;
+    group.clearLayers(); reportMarkers.current.clear();
+    (group.options as L.MarkerClusterGroupOptions).iconCreateFunction = cluster => clusterIcon(cluster, en, true);
+    const items = selectedReport && !filteredReports.some(report => report.id === selectedReport.id) ? [...filteredReports, selectedReport] : filteredReports;
+    group.addLayers(items.map(report => {
+      const label = (en ? "Citizen report" : "Laporan warga") + " · " + report.location_name + " · " + (en ? "Unverified" : "Belum diverifikasi");
+      const marker = L.marker(position(report.location.coordinates), { icon: reportIcon(report.id === selectedReport?.id), title: label, alt: label, riseOnHover: true })
+        .on("click", () => selectReport(report.id));
+      reportMarkers.current.set(report.id, marker); return marker;
+    }));
+  }, [filteredReports, selectedReport, en]);
 
-    markersGroup.clearLayers();
-
-    filteredPlots.forEach((plot) => {
-      const coords: [number, number] = [
-        plot.geometry.coordinates[1],
-        plot.geometry.coordinates[0],
-      ];
-      const isSelected = selectedPlot?.id === plot.id;
-      const color = getRecoveryMarkerColor(plot.properties.latest_status);
-
-      const pinIcon = L.divIcon({
-        className: "recovery-pin-wrapper",
-        html: `
-          <div class="recovery-marker-dot ${isSelected ? "selected" : ""}" style="background-color: ${color};" title="${plot.properties.name} (${plot.properties.survival_rate}%)">
-            <span class="dot-inner"></span>
-            ${isSelected ? '<span class="recovery-ping-ring" style="border-color: ' + color + ';"></span>' : ""}
-          </div>
-        `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-
-      const marker = L.marker(coords, { icon: pinIcon });
-      marker.on("click", () => {
-        setSelectedPlot(plot);
-        map.panTo(coords, { animate: true });
-      });
-
-      markersGroup.addLayer(marker);
+  // Region changes fit the map; selecting a marker must not reset the region camera.
+  function fitPlots() {
+    const map = mapRef.current;
+    if (!map) return;
+    const points = [...filtered.map(p => position(p.geometry.coordinates)), ...filteredReports.map(report => position(report.location.coordinates))];
+    if (points.length) map.fitBounds(L.latLngBounds(points), {
+      paddingTopLeft: [65, 100], paddingBottomRight: [65, 65], maxZoom: 11, animate: !reducedMotion(),
     });
-
-    // animasi terbang (flyTo) halus saat wilayah filter dipilih
-    const targetConfig = REGION_COORDINATES[selectedRegion as RegionKey];
-    if (targetConfig) {
-      map.flyTo(targetConfig.center, targetConfig.zoom, { duration: 1.2 });
-    } else if (filteredPlots.length > 0 && selectedRegion !== "all") {
-      const firstCoord: [number, number] = [
-        filteredPlots[0].geometry.coordinates[1],
-        filteredPlots[0].geometry.coordinates[0],
-      ];
-      map.flyTo(firstCoord, 9, { duration: 1.2 });
+    else {
+      const region = REGION_COORDINATES[selectedRegion as RegionKey] ?? REGION_COORDINATES.all;
+      map.setView(region.center, region.zoom, { animate: !reducedMotion() });
     }
+  }
+  const fitRegion = useEffectEvent(fitPlots);
+  useEffect(() => { if (!loading) fitRegion(); }, [selectedRegion, loading]);
 
-    // sinkronisasi petak aktif pertama bila petak sebelumnya keluar dari filter
-    if (filteredPlots.length > 0) {
-      const stillInList = filteredPlots.some((p) => p.id === selectedPlot?.id);
-      if (!stillInList) {
-        setSelectedPlot(filteredPlots[0]);
-      }
-    }
-  }, [filteredPlots, selectedRegion, selectedPlot?.id]);
+  useEffect(() => {
+    for (const plot of filtered) markers.current.get(plot.id)?.setIcon(pinIcon(plot.properties.latest_status, plot.id === selectedId));
+    const activeId = selectedId ?? selectedReport?.id;
+    const coordinates = selected?.geometry.coordinates ?? selectedReport?.location.coordinates;
+    if (!activeId || !coordinates) return;
+    let active = true;
+    const frame = requestAnimationFrame(() => {
+      const map = mapRef.current, marker = (selected ? markers : reportMarkers).current.get(activeId);
+      if (!map || !marker) return;
+      map.invalidateSize({ pan: false });
+      if (selectedReport && map.getZoom() < 12) map.setView(position(coordinates), 12, { animate: false });
+      (selected ? clustersRef : reportClusters).current?.zoomToShowLayer(marker, () => {
+        if (!active || mapRef.current !== map) return;
+        const coords = L.latLng(position(coordinates));
+        const offset = window.innerWidth > 700 ? L.point(-175, 0) : L.point(0, -18);
+        map.panTo(map.unproject(map.project(coords).add(offset)), { animate: !reducedMotion() });
+        panel.current?.focus({ preventScroll: true });
+      });
+    });
+    return () => { active = false; cancelAnimationFrame(frame); };
+  }, [selectedId, selected, selectedReport, filtered, en]);
 
-  return (
-    <section className="recovery-section" aria-labelledby="recovery-map-title">
-      {/* 1. header pengantar menu bukti pulih ---------------------------------- */}
-      <div className="section-head-card">
-        <div>
-          <span className="live-status-pill green">
-            <span className="pulse-dot green"></span>
-            lahan pasca-karhutla dalam rehabilitasi terverifikasi
-          </span>
-          <h2 id="recovery-map-title" className="section-title-large">
-            Peta Kawasan Pemulihan & Sekat Kanal Gambut
-          </h2>
-          <p className="section-subtitle-text">
-            Pantau sebaran petak tanah yang telah padam dan kini sedang ditanami bibit serta dibasahi
-            melalui sekat kanal di 6 provinsi rawan karhutla BNPB. Klik titik petak untuk melihat rincian kelompok tani pengelola dan rasio hidup bibit.
-          </p>
-        </div>
+  useEffect(() => {
+    if (!selectedCode) return;
+    const controller = new AbortController();
+    getRecoveryHistoryApi(selectedCode, controller.signal, historyPage).then(result => {
+      if (controller.signal.aborted) return;
+      setHistory(previous => {
+        const items = [...(historyPage > 1 && previous?.code === selectedCode ? previous.items : []), ...result.items.filter(item => item.plot_code === selectedCode)];
+        return { code: selectedCode, items: Array.from(new Map(items.map(item => [item.id, item])).values()).sort((a, b) => b.monitoring_date.localeCompare(a.monitoring_date)), hasMore: result.hasMore, failed: false };
+      });
+      setHistoryPending(false);
+    }).catch(() => {
+      if (controller.signal.aborted) return;
+      setHistory(previous => ({ code: selectedCode, items: previous?.code === selectedCode ? previous.items : [], hasMore: historyPage > 1, failed: true }));
+      setHistoryPending(false);
+    });
+    return () => controller.abort();
+  }, [selectedCode, historyPage, retry]);
+
+  function closeDetail() {
+    setExpanded(false);
+    const marker = selectedId ? markers.current.get(selectedId) : selectedReport ? reportMarkers.current.get(selectedReport.id) : null;
+    if (selectedReportId) onSelectReport(null); else onSelectPlot(null);
+    (marker?.getElement() || filterButton.current)?.focus({ preventScroll: true });
+  }
+  function resetFilters() { setLayer("all"); setQuery(""); setStatus("all"); setEcosystem("all"); onSelectRegion("all"); }
+
+  return <section ref={shell} className={styles.shell} data-detail={hasDetail} data-expanded={expanded} aria-label={t("Peta kawasan pemulihan", "Restoration map")}
+    onKeyDown={event => { if (event.key === "Escape") { if (hasDetail) closeDetail(); else { setFiltersOpen(false); filterButton.current?.focus(); } } }}>
+    <div className={styles.stage}>
+      <div ref={canvas} className={styles.map} />
+      <div className={styles.topbar}>
+        <div className={styles.heading}><h1>{t("Kawasan pemulihan", "Restoration areas")}</h1><span role="status">{loading ? t("Memuat petak…", "Loading plots…") : filtered.length + " " + t("petak", "plots") + (sample ? t(" contoh", " sample") : "") + " · " + filteredReports.length + " " + t("laporan warga", "reports")}</span></div>
+        <button ref={filterButton} className={styles.filterButton} aria-expanded={filtersOpen} aria-controls="recovery-filters" onClick={() => { if (hasDetail) closeDetail(); setFiltersOpen(!filtersOpen); }}><MapIcon name="layers" />Filter{filterCount > 0 && <span>{filterCount}</span>}</button>
       </div>
-
-      {/* 2. bilah filter horizontal multi-provinsi ------------------------------ */}
-      <div className="recovery-filter-container">
-        <div className="recovery-filter-label-row">
-          <span className="filter-label-text">
-            PILIH PROVINSI PEMULIHAN:
-          </span>
-          <span style={{ fontSize: "11px", color: "#64748B", fontWeight: 600 }}>
-            Menampilkan {filteredPlots.length} dari {plots.features.length} Petak Nasional
-          </span>
-        </div>
-
-        <div className="recovery-region-scroll-pills" role="tablist" aria-label="Filter Wilayah Restorasi">
-          {REGION_TABS.map((tab) => {
-            const count =
-              tab.key === "all"
-                ? plots.features.length
-                : plots.features.filter((p) => matchRegion(p.properties.region, tab.key)).length;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={selectedRegion === tab.key}
-                className={`recovery-region-pill ${selectedRegion === tab.key ? "active" : ""}`}
-                onClick={() => onSelectRegion(tab.key)}
-              >
-                <span>{tab.label}</span>
-                <span className="pill-count-badge">{count}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className={styles.tools}>
+        <button title={t("Lihat semua petak", "Show all plots")} aria-label={t("Lihat semua petak", "Show all plots")} onClick={() => fitPlots()}><MapIcon name="extent" /></button>
+        <button title={t("Layar penuh", "Fullscreen")} aria-label={fullscreen ? t("Keluar layar penuh", "Exit fullscreen") : t("Layar penuh", "Fullscreen")} onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void shell.current?.requestFullscreen().catch(() => {}); }}><MapIcon name="expand" /></button>
       </div>
-
-      {/* 3. banner ringkasan metrik provinsi terpilih ---------------------------- */}
-      <div className="recovery-prov-summary-card">
-        <div className="prov-summary-main">
-          <div>
-            <span className="prov-summary-eyebrow">RINGKASAN WILAYAH AKTIF</span>
-            <h3 className="prov-summary-title">{regionStats.provinceLabel}</h3>
-          </div>
-          <span className={`prov-wetland-badge ${regionStats.isGambut ? "gambut" : "mineral"}`}>
-            {regionStats.isGambut ? "Kubah Gambut & Sekat Kanal" : "Hutan Kota & Koridor Hijau"}
-          </span>
+      {filtersOpen && <div id="recovery-filters" className={styles.filters}>
+        <label>{t("Tampilkan", "Show")}<select aria-label={t("Tampilkan", "Show")} value={layer} onChange={event => { setLayer(event.target.value); }}><option value="all">{t("Petak dan laporan warga", "Plots and citizen reports")}</option><option value="plots">{t("Petak terverifikasi", "Verified plots")}</option><option value="reports">{t("Laporan warga", "Citizen reports")}</option></select></label>
+        <label>{t("Cari lokasi", "Find a location")}<input type="search" value={query} placeholder={t("Nama, kode, atau catatan", "Name, code, or notes")} onChange={event => setQuery(event.target.value)} /></label>
+        <label>{t("Wilayah", "Region")}<select aria-label={t("Wilayah", "Region")} value={selectedRegion} onChange={event => onSelectRegion(event.target.value)}>{REGION_TABS.map(region => <option key={region.key} value={region.key}>{region.key === "all" ? t("Semua wilayah", "All regions") : region.key === "lainnya" ? t("Wilayah lain", "Other region") : region.province}</option>)}</select></label>
+        <div className={styles.filterRow}>
+          <label>{t("Kondisi", "Condition")}<select aria-label={t("Kondisi", "Condition")} value={status} onChange={event => setStatus(event.target.value)}><option value="all">{t("Semua kondisi", "All conditions")}</option>{Object.entries(STATUS).map(([key, label]) => <option key={key} value={key}>{label[en ? 1 : 0]}</option>)}</select></label>
+          <label>{t("Ekosistem", "Ecosystem")}<select aria-label={t("Ekosistem", "Ecosystem")} value={ecosystem} onChange={event => setEcosystem(event.target.value)}><option value="all">{t("Semua", "All")}</option><option value="gambut">{t("Gambut", "Peatland")}</option><option value="hutan_kota">{t("Hutan kota", "Urban forest")}</option><option value="mineral">{t("Mineral", "Mineral soil")}</option></select></label>
         </div>
-
-        <div className="prov-metrics-strip">
-          <div className="prov-metric-item">
-            <span className="prov-metric-lbl">Petak Terdaftar</span>
-            <span className="prov-metric-val">{regionStats.totalPlots} <span style={{ fontSize: "11px" }}>Zona</span></span>
-          </div>
-          <div className="prov-metric-item">
-            <span className="prov-metric-lbl">Pohon Hidup</span>
-            <span className="prov-metric-val" style={{ color: "var(--stamp)" }}>
-              {formatId(regionStats.totalAlive)} <span style={{ fontSize: "11px" }}>Pohon</span>
-            </span>
-          </div>
-          <div className="prov-metric-item">
-            <span className="prov-metric-lbl">Survival Rate Rata-rata</span>
-            <span className="prov-metric-val" style={{ color: Number(regionStats.avgSurvival) >= 80 ? "var(--stamp)" : "#D97706" }}>
-              {regionStats.avgSurvival}%
-            </span>
-          </div>
-          <div className="prov-metric-item">
-            <span className="prov-metric-lbl">Kondisi Dominan</span>
-            <span className="prov-metric-val" style={{ fontSize: "13px" }}>
-              {regionStats.suburCount} Petak Subur
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. kanvas peta pemulihan & bottom sheet -------------------------------- */}
-      <div className="map-container-card">
-        <div className="card-header-clean">
-          <div className="card-title-text">
-            <span>Koordinat Petak Restorasi Terverifikasi (OpenStreetMap)</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              className={`btn-toggle-khg ${showKhgLayer ? "active" : ""}`}
-              onClick={() => setShowKhgLayer(!showKhgLayer)}
-              title="Tampilkan atau sembunyikan batas poligon Kesatuan Hidrologis Gambut (KHG) BRGM"
-            >
-              <span className="khg-dot-indicator" />
-              <span>Kubah Gambut BRGM {showKhgLayer ? "Aktif" : "Nonaktif"}</span>
-            </button>
-            <span
-              style={{
-                fontSize: "12px",
-                fontWeight: 700,
-                backgroundColor: "rgba(14, 117, 59, 0.1)",
-                color: "var(--stamp)",
-                padding: "4px 10px",
-                borderRadius: "var(--radius-pill)",
-              }}
-            >
-              Bebas Kuota API • Ramah Bandwidth Rendah
-            </span>
-          </div>
-        </div>
-
-        {/* penanda jika petak terpilih berada tepat di dalam zona khg brgm */}
-        {selectedPlot && selectedPlotKhg && (
-          <div className="khg-spot-indicator-box">
-            <span className="khg-spot-icon">🛡️</span>
-            <div className="khg-spot-text">
-              <span>
-                Petak <strong>{selectedPlot.properties.name}</strong> berada di zona{" "}
-                <strong>{selectedPlotKhg.nama_khg}</strong> ({selectedPlotKhg.fungsi_ekosistem}).
-              </span>
-              <span className="khg-spot-sub">
-                SK MenLHK: {selectedPlotKhg.sk_menlhk} • Ambang batas kering kritis BRGM:{" "}
-                <strong>{selectedPlotKhg.ambang_muka_air_cm} cm</strong>
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="leaflet-map-wrapper">
-          <div ref={mapContainerRef} style={{ width: "100%", height: "480px" }} />
-        </div>
-
-        {/* bottom sheet rincian petak terpilih ---------------------------------- */}
-        <PlotBottomSheet
-          plot={selectedPlot}
-          onClose={() => setSelectedPlot(null)}
-          onFilterTimelineByPlot={(code) => {
-            if (onNavigateToForumWithPlot) {
-              onNavigateToForumWithPlot(code);
-            }
-          }}
-        />
-      </div>
-    </section>
-  );
-};
+        <div className={styles.filterActions}><button onClick={resetFilters}>{t("Reset filter", "Reset filters")}</button><button onClick={() => { setFiltersOpen(false); fitPlots(); }}>{t("Lihat hasil", "View results")}</button></div>
+      </div>}
+      {!loading && !reports.loading && !reports.failed && !hasDetail && !selectedReportId && !filtersOpen && !filtered.length && !filteredReports.length && <div className={styles.empty} role="status"><strong>{t("Tidak ada lokasi", "No locations found")}</strong><span>{t("Coba wilayah atau filter lain.", "Try another region or filter.")}</span><button onClick={resetFilters}>{t("Reset filter", "Reset filters")}</button></div>}
+      {(reports.loading || reports.failed || reports.truncated) && <div className={styles.reportNotice} role="status">{reports.loading ? t("Memuat laporan di area peta…", "Loading reports in this area…") : reports.failed ? <>{t("Laporan belum dapat dimuat.", "Reports are unavailable.")} <button onClick={reports.refresh}>{t("Coba lagi", "Try again")}</button></> : t("500 laporan ditampilkan. Perbesar peta untuk melihat area lebih rinci.", "Showing 500 reports. Zoom in to explore a smaller area.")}</div>}
+      {selectedReportId && (reports.detailLoading || reports.detailFailed) && <div className={styles.reportNotice} role="status">{reports.detailLoading ? t("Memuat rincian laporan…", "Loading report details…") : <>{t("Laporan tidak ditemukan atau belum dapat dimuat.", "Report not found or unavailable.")} <button onClick={() => onSelectReport(null)}>{t("Tutup", "Close")}</button><button onClick={reports.refresh}>{t("Coba lagi", "Try again")}</button></>}</div>}
+      {mapError && <p className={styles.notice} role="status">{t("Sebagian peta belum termuat.", "Some map tiles are unavailable.")}</p>}
+      <div className={styles.legend} aria-label={t("Legenda peta", "Map legend")}><strong>{t("Petak", "Plots")}</strong>{Object.entries(STATUS).map(([key, label]) => <span key={key}><i style={{ background: COLORS[key as TreeStatus] }} />{label[en ? 1 : 0]}</span>)}<span><i className={styles.reportLegend} />{t("Laporan warga · belum diverifikasi", "Citizen report · unverified")}</span></div>
+    </div>
+    {selectedReport && <aside ref={panel} tabIndex={-1} className={styles.detail} aria-label={t("Rincian laporan warga", "Citizen report details")}><RecoveryReportDetail report={selectedReport} language={language} onClose={closeDetail} expanded={expanded} onToggleExpand={() => setExpanded(value => !value)} /></aside>}
+    {selected && <aside ref={panel} tabIndex={-1} className={styles.detail} aria-label={t("Rincian petak", "Plot details")}>
+      <RecoveryDetail key={selected.id} plot={selected} language={language} onClose={closeDetail} expanded={expanded} onToggleExpand={() => setExpanded(value => !value)}
+        items={history?.code === selectedCode ? (history?.items ?? []) : []}
+        historyLoading={history?.code !== selectedCode}
+        historyFailed={history?.code === selectedCode && !!history?.failed}
+        historyHasMore={history?.code === selectedCode && !!history?.hasMore}
+        historyPending={historyPending}
+        onLoadMore={() => { setHistoryPending(true); setHistoryRequest({ code: selectedCode!, page: historyPage + 1 }); }}
+        onRetryHistory={() => { setHistoryPending(true); setRetry(value => value + 1); }} />
+    </aside>}
+  </section>;
+}

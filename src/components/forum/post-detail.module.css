@@ -1,0 +1,273 @@
+.page {
+  min-height: 100vh;
+  padding: 16px 0 40px;
+  background: var(--surface-bg);
+}
+
+.article {
+  width: min(100%, 880px);
+  margin: 0 auto;
+}
+
+.backLink,
+.recoveryLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--forest-green-800);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.backLink:focus-visible,
+.recoveryLink:focus-visible,
+.actionButton:focus-visible {
+  outline: 3px solid var(--blue-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 22px 0 20px;
+  padding: 14px 0;
+  border-top: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.author {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  flex: 0 0 auto;
+}
+
+.authorMeta {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.authorMeta strong,
+.authorMeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authorMeta span,
+.date {
+  color: #5e625a;
+  font-size: 0.8rem;
+}
+
+.date {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.title {
+  max-width: 18ch;
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.unverified,
+.sample {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--warning-amber-soft);
+  color: #684200;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sample {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.media,
+.mediaFallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-height: 480px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #e9e3d6;
+}
+
+.media img,
+.media video {
+  display: block;
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+}
+
+.mediaFallback {
+  min-height: 180px;
+  color: #5e625a;
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.comparison figure {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #e9e3d6;
+}
+
+.comparison img {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+
+.comparison figcaption {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.caption {
+  max-width: 68ch;
+  margin: 22px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.observation {
+  margin: 22px 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.observation h2 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.observation dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+}
+
+.observation dl div {
+  display: grid;
+  gap: 2px;
+}
+
+.observation dt {
+  color: #5e625a;
+  font-size: 0.78rem;
+}
+
+.observation dd {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 28px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #6b6b6b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.actionButton svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.actionButton:hover {
+  background: var(--surface-muted);
+}
+
+.actionButton[aria-pressed="true"] {
+  color: #c73845;
+}
+
+.actionButton[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 4px 0 32px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .date {
+    text-align: left;
+  }
+
+  .comparison {
+    gap: 8px;
+  }
+
+  .comparison figcaption {
+    padding: 8px;
+    font-size: 0.72rem;
+  }
+}
+
+.placeDetails { margin:0 0 16px; display:grid; gap:4px; color:#52645a; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
