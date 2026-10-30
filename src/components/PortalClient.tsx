@@ -345,7 +345,7 @@ export default function PortalClient() {
         </div>
 
         <div className="footer-content-layer">
-          <div className="footer-fluid-wrapper">
+          <div className="footer-fluid-wrapper footer-hero-wrapper">
             <div className="footer-campaign-hero">
               <h2 className="footer-campaign-title">Pulihkan Lahan, Rawat Masa Depan</h2>
               <p className="footer-campaign-desc">
