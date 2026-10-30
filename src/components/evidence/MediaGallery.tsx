@@ -32,7 +32,7 @@ export function MediaGallery({ items, label, language, variant = "detail", href,
     <div className={styles.frame}>
       {failed.includes(item.url) ? <p className={styles.unavailable}>{en ? "Preview unavailable." : "Pratinjau belum tersedia."} <a href={item.url} target="_blank" rel="noopener noreferrer">{en ? "Open file" : "Buka berkas"}</a></p>
         : item.type === "video" ? <video key={item.url} src={item.url} poster={item.thumbnail_url} controls playsInline preload="metadata" aria-label={`${label} - ${index + 1}`} onError={fail} />
-        : href ? <Link href={href} aria-label={en ? `Open ${label}` : `Buka ${label}`}>{image}</Link>
+        : href ? <Link href={href} onClick={onOpen} aria-label={en ? `Open ${label}` : `Buka ${label}`}>{image}</Link>
         : onOpen ? <button className={styles.open} type="button" onClick={onOpen} aria-label={en ? `Open ${label}` : `Buka ${label}`}>{image}</button> : image}
     </div>
     {items.length > 1 && <div className={styles.controls}>

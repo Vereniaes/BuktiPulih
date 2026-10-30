@@ -29,7 +29,7 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
   const openLabel = language === "id" ? "Baca catatan lengkap" : "Read full post";
 
   const open = (label: string, className: string) => published
-    ? <Link className={className} href={detailHref}>{label}</Link>
+    ? <Link className={className} href={detailHref} onClick={() => onOpen?.(post)}>{label}</Link>
     : <button className={className} type="button" onClick={() => onOpen?.(post)}>{label}</button>;
 
   return (
@@ -47,7 +47,7 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
         <span>{post.location_name}</span>
       </p>
 
-      {post.media?.url && <MediaGallery items={getPostMedia(post)} label={post.location_name} language={language} variant="feed" href={published ? detailHref : undefined} onOpen={published ? undefined : () => onOpen?.(post)} />}
+      {post.media?.url && <MediaGallery items={getPostMedia(post)} label={post.location_name} language={language} variant="feed" href={published ? detailHref : undefined} onOpen={() => onOpen?.(post)} />}
 
       <p className={styles.caption}>{post.caption}</p>
       {open(openLabel, styles.readMore)}
@@ -61,7 +61,7 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
           <span>{format(post.metrics.likes)}</span>
         </button>
         {published ? (
-          <Link className={styles.action} href={`${detailHref}#comments-section`}
+          <Link className={styles.action} href={`${detailHref}#comments-section`} onClick={() => onOpen?.(post)}
             aria-label={language === "id" ? `Buka komentar pada catatan ${author}` : `Read comments on the post by ${author}`}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-4-.9L3 20l1.8-4A7.2 7.2 0 0 1 4 12c0-4.1 3.6-7.5 8-7.5s8 2.9 8 7Z" /></svg>
             <span>{format(post.metrics.comments_count)}</span>

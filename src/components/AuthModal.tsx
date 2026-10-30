@@ -362,7 +362,7 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
       </form>}
 
       {screen === "code" && flow && <form className={styles.form} onSubmit={verifyCode} aria-busy={busy}>
-        <p className={styles.destination}>Kode dikirim ke <strong>{flow.masked_email}</strong></p>
+        <p className={styles.destination}>Kode dikirim ke <strong>{flow.masked_email}</strong>. Periksa juga folder spam.</p>
         <label className={styles.label} htmlFor="auth-code">Kode email</label>
         <input ref={codeRef} id="auth-code" className={`${styles.input} ${styles.codeInput}`} type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{8}" maxLength={8} aria-describedby="auth-code-help" required value={code} onChange={event => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} />
         <small id="auth-code-help" className={styles.hint}>{expiresIn ? `Kode berlaku ${formatTime(expiresIn)} lagi.` : "Kode kedaluwarsa. Kirim kode baru untuk melanjutkan."}</small>

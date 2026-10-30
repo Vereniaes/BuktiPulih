@@ -16,7 +16,7 @@ import { PageMotion } from "@/components/PageMotion";
 import { hasCompleteProfile } from "@/types/account";
 import { useAccount } from "@/components/account/AccountSession";
 import { useForumPosts } from "./forum/useForumPosts";
-import { cacheForumPosts } from "@/utils/forumStorage";
+import { cacheForumPosts, recordPostView } from "@/utils/forumStorage";
 
 import {
   getHomepageDataApi,
@@ -32,6 +32,7 @@ import {
   PlotFeatureCollection,
   BnpbSyncData,
   RecoveryReport,
+  ForumPost,
 } from "@/types";
 
 const HomeOverview = dynamic(() => import("@/components/home/HomeOverview").then(mod => mod.HomeOverview));
@@ -171,6 +172,18 @@ export default function PortalClient() {
     });
   };
 
+  const handleOpenPostDetail = (post: ForumPost) => {
+    const updated = recordPostView(post);
+    if (updated !== post) {
+      setForumPosts((prev) => {
+        const next = prev.map((item) => (item.id === post.id ? updated : item));
+        cacheForumPosts(next);
+        return next;
+      });
+    }
+    router.push(`/forum/${encodeURIComponent(post.id)}`);
+  };
+
   const handleCreatePost = (newPost: RecoveryReport) => {
     setForumPosts((prev) => {
       const updated = [newPost, ...prev];
@@ -287,7 +300,7 @@ export default function PortalClient() {
               source={forumSource}
               selectedRegionFilter={region}
               onSelectRegionFilter={value => navigate({ region: value, plot: null, report: null }, true)}
-              onOpenPostDetail={(post) => router.push(`/forum/${encodeURIComponent(post.id)}`)}
+              onOpenPostDetail={handleOpenPostDetail}
               onToggleLike={handleToggleLike}
             />
           </div>

@@ -37,7 +37,15 @@ export function useForumPosts(minimumPages = 1) {
           const merged = new Map(previous.map(post => [post.id, post]));
           for (const post of result.items) {
             const cached = merged.get(post.id);
-            merged.set(post.id, cached ? { ...post, metrics: { ...post.metrics, likes: cached.metrics.likes, user_has_liked: cached.metrics.user_has_liked } } : post);
+            merged.set(post.id, cached ? {
+              ...post,
+              metrics: {
+                ...post.metrics,
+                likes: cached.metrics.likes,
+                user_has_liked: cached.metrics.user_has_liked,
+                views: Math.max(post.metrics.views || 0, cached.metrics.views || 0),
+              },
+            } : post);
           }
           return [...merged.values()].map(post => result.legacy_comment_counts && Object.hasOwn(result.legacy_comment_counts, post.id)
             ? { ...post, metrics: { ...post.metrics, comments_count: result.legacy_comment_counts[post.id] } } : post);

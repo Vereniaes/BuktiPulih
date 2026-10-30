@@ -8,12 +8,12 @@
 .controls button:disabled { opacity:.5; cursor:wait; }
 .controls button:focus-visible { outline:2px solid #2d5a43; outline-offset:2px; }
 .actions,.modes,.detail,.weatherPanel,.weatherLegend { pointer-events:auto; border:1px solid var(--surface-border,#d8cfbd); border-radius:7px; background:var(--surface-bg,#f6f1e6); box-shadow:0 2px 6px #17312414; }
-.actions { display:flex; justify-self:end; overflow:hidden; }
-.actions>button { display:flex; align-items:center; justify-content:center; gap:5px; padding:0 9px; flex:1; }
+.actions { display:flex; overflow:hidden; }
+.actions>button { display:flex; align-items:center; justify-content:center; gap:6px; padding:0 12px; flex:1; font-weight:500; }
 .actions>button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
 .actions button[aria-expanded=true] { color:#116683; background:#e8f1ef; }
-.zoom { display:flex; border-right:1px solid var(--surface-border,#d8cfbd); }
-.zoom button { min-width:44px; font-size:20px; padding:0 7px; }
+.zoom { display:flex; border-right:1px solid var(--surface-border,#d8cfbd); flex:0 0 96px; }
+.zoom button { flex:1; min-width:44px; font-size:20px; padding:0; display:grid; place-items:center; }
 .zoom button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
 .modes { display:flex; overflow:hidden; }
 .modes button { flex:1; padding:0 10px; white-space:nowrap; }

@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ForumPost } from "@/types";
-import { cacheForumPost, readCachedPosts } from "@/utils/forumStorage";
+import { cacheForumPost, readCachedPosts, recordPostView } from "@/utils/forumStorage";
 import { SharePostButton } from "./forum/SharePostButton";
 import { REGION_TABS } from "@/utils/plotDisplay";
 import { ProfileAvatar } from "./account/ProfileAvatar";
@@ -39,6 +39,7 @@ export function ForumPostDetailClient({ post }: ForumPostDetailClientProps) {
     try {
       const language = localStorage.getItem("buktipulih_language") === "en" ? "en" : "id";
       const cached = readCachedPosts().find(item => item.id === post.id);
+      recordPostView(cached || post);
       const frame = requestAnimationFrame(() => {
         setLanguage(language);
         if (cached) {
