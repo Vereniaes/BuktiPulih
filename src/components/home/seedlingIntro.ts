@@ -1,6 +1,7 @@
-// Todo:
-// -> Run the once-only seedling intro inside its own hero.
-// -> Keep words, media and action entrances smooth and interruptible.
+// file ini buat orkestrasi animasi pembuka tunas hero beranda
+// - memutar video tunas berdurasi tiga detik sekali saja per peramban
+// - menyembunyikan bilah navigasi selama intro lalu memudar masuk secara mulus
+// - menggabungkan kata judul misi ke posisi akhir dengan kurva pegas tanpa pantulan
 
 // --- Seedling motion ---
 import { animate, frame, spring } from "motion";
@@ -28,12 +29,17 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
   const kicker = find("[data-kicker]"), cue = find("[data-cue]");
   const words = [...root.querySelectorAll<HTMLElement>("[data-word]")];
   const actions = [...root.querySelectorAll<HTMLElement>("[data-intro-action]")];
+  const header = document.querySelector<HTMLElement>("header.portal-header");
   const managed = [...words, media, tone, video, kicker, cue, ...actions];
+  if (header) managed.push(header);
   const animations: ReturnType<typeof animate>[] = [];
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   let finished = false, merging = false, disposed = false, watchdog = 0;
   const track = (animation: ReturnType<typeof animate>) => { animations.push(animation); return animation; };
-  const clearStyles = () => managed.forEach(element => ["transform", "opacity", "color"].forEach(property => element.style.removeProperty(property)));
+  const clearStyles = () => {
+    managed.forEach(element => ["transform", "opacity", "color", "pointer-events"].forEach(property => element.style.removeProperty(property)));
+    document.body.style.removeProperty("overflow");
+  };
 
   function finish() {
     if (finished || disposed) return;
@@ -42,7 +48,13 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
     animations.splice(0).forEach(animation => animation.stop());
     root.dataset.opening = "false";
     root.dataset.phase = "settled";
+    document.documentElement.dataset.heroOpening = "done";
     [...actions, cue].forEach(element => { element.inert = false; });
+    if (header) {
+      header.inert = false;
+      header.style.removeProperty("pointer-events");
+      header.style.removeProperty("opacity");
+    }
     clearStyles();
     frame.postRender(clearStyles);
     video.pause();
@@ -51,8 +63,6 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
   }
 
   function measure() {
-    const header = document.querySelector("header.portal-header");
-    root.style.setProperty("--header-height", (header?.getBoundingClientRect().height ?? 73) + "px");
     root.style.setProperty("--scene-width", document.body.clientWidth + "px");
     if (merging) finish();
   }
@@ -67,6 +77,7 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
     const from = getComputedStyle(media).transform, toneFrom = getComputedStyle(tone).opacity;
     root.dataset.opening = "false";
     root.dataset.phase = "merging";
+    document.documentElement.dataset.heroOpening = "merging";
     words.forEach((word, index) => {
       const after = word.getBoundingClientRect(), previous = before[index];
       const x = previous.rect.x - after.x, y = previous.rect.y - after.y;
@@ -79,6 +90,18 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
     track(animate(media, { transform: [from, getComputedStyle(media).transform] }, { type: "spring", bounce: 0, duration: 1.6, delay: .25 }));
     track(animate(tone, { opacity: [Number(toneFrom), 1] }, { duration: .45, ease: [.22, 1, .36, 1] }));
     track(animate(video, { opacity: [1, 0] }, { duration: .45, ease: [.4, 0, .2, 1] }));
+    const currentHeader = header ?? document.querySelector<HTMLElement>("header.portal-header");
+    if (currentHeader) {
+      currentHeader.style.removeProperty("opacity");
+      const headerEntry = track(animate(currentHeader, { opacity: [0, 1] }, { duration: .75, delay: .65, ease: [.4, 0, .2, 1] }));
+      headerEntry.finished.then(() => {
+        if (!disposed && currentHeader) {
+          currentHeader.inert = false;
+          currentHeader.style.opacity = "1";
+          currentHeader.style.removeProperty("pointer-events");
+        }
+      });
+    }
     track(animate(kicker, { opacity: [0, 1] }, { duration: .7, delay: .8, ease: [.4, 0, .2, 1] }));
     actions.forEach((action, index) => {
       const entry = track(animate(action, { opacity: [0, 1], transform: ["translate3d(0,14px,0)", "translate3d(0,0,0)"] }, { type: "spring", bounce: 0, duration: .7, delay: 1.25 + index * 1.15 }));
@@ -92,6 +115,7 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
   function playing() {
     if (disposed || finished) return;
     root.dataset.phase = "playing";
+    document.documentElement.dataset.heroOpening = "pending";
     seenInPage = true;
     try { localStorage.setItem(SEEN_KEY, "yes"); } catch {}
     words.forEach((word, index) => track(animate(word, { opacity: [0, 1], transform: [innerWidth <= 600 ? "translateY(12px)" : "translateX(" + (index < 2 ? -18 : 18) + "px)", "translate(0px,0px)"] }, { type: "spring", bounce: 0, duration: .55 })));
@@ -102,23 +126,27 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
   const failed = () => finish();
   const reduced = () => { if (preference.matches) finish(); };
   measure();
-  const header = document.querySelector("header.portal-header");
-  const size = new ResizeObserver(measure);
-  if (header) size.observe(header);
   window.addEventListener("resize", measure);
   preference.addEventListener("change", reduced);
   video.addEventListener("playing", playing, { once: true });
   video.addEventListener("ended", ended, { once: true });
   video.addEventListener("error", failed, { once: true });
-  const visibility = new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) finish(); });
-  visibility.observe(root);
 
   let seen = seenInPage;
   try { seen ||= localStorage.getItem(SEEN_KEY) === "yes"; } catch {}
-  if (seen || preference.matches || root.dataset.opening === "false") finish();
-  else {
+  if (seen || preference.matches || root.dataset.opening === "false") {
+    document.documentElement.dataset.heroOpening = "done";
+    finish();
+  } else {
+    document.documentElement.dataset.heroOpening = "pending";
     root.dataset.phase = "loading";
     [...actions, cue].forEach(element => { element.inert = true; });
+    if (header) {
+      header.inert = true;
+      header.style.opacity = "0";
+      header.style.pointerEvents = "none";
+    }
+    document.body.style.overflow = "hidden";
     video.preload = "auto";
     video.src = "/home/seedling-intro.mp4";
     video.muted = true;
@@ -131,14 +159,18 @@ export function attachSeedlingIntro(root: HTMLElement): () => void {
   return () => {
     disposed = true;
     clearTimeout(watchdog);
-    size.disconnect();
-    visibility.disconnect();
     window.removeEventListener("resize", measure);
     preference.removeEventListener("change", reduced);
     video.removeEventListener("playing", playing);
     video.removeEventListener("ended", ended);
     video.removeEventListener("error", failed);
     animations.splice(0).forEach(animation => animation.stop());
+    delete document.documentElement.dataset.heroOpening;
+    if (header) {
+      header.inert = false;
+      header.style.removeProperty("pointer-events");
+      header.style.removeProperty("opacity");
+    }
     clearStyles();
     frame.postRender(clearStyles);
     video.pause();
