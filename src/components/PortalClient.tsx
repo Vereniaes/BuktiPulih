@@ -55,14 +55,16 @@ export default function PortalClient() {
   const activePortalTab: NavPortalTab = (tab === "citizen" || tab === "articles") ? "forum" : validTabs.includes(tab as NavPortalTab) ? (tab as NavPortalTab) : "home";
   const region = searchParams.get("region") ?? "all";
   const selectedRegion = REGION_TABS.some(item => item.key === region) ? region : "all";
-  const navigate = useCallback((changes: { tab?: NavPortalTab; region?: string; plot?: string | null; report?: string | null }) => {
+  const navigate = useCallback((changes: { tab?: NavPortalTab; region?: string; plot?: string | null; report?: string | null }, replace = false) => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("compose");
     for (const [key, value] of Object.entries(changes)) {
       if (value === null || value === "home" || value === "all") params.delete(key);
       else params.set(key, value);
     }
-    router.push(params.size ? `/?${params}` : "/", { scroll: false });
+    const url = params.size ? `/?${params}` : "/";
+    if (replace) window.history.replaceState(null, "", `${url}${window.location.hash}`);
+    else router.push(url, { scroll: false });
   }, [router, searchParams]);
   useEffect(() => {
     if (tab !== "citizen" && tab !== "articles") return;
@@ -283,8 +285,8 @@ export default function PortalClient() {
               language={language}
               posts={forumPosts}
               source={forumSource}
-              selectedRegionFilter={selectedRegion}
-              onSelectRegionFilter={setSelectedRegion}
+              selectedRegionFilter={region}
+              onSelectRegionFilter={value => navigate({ region: value, plot: null, report: null }, true)}
               onOpenPostDetail={(post) => router.push(`/forum/${encodeURIComponent(post.id)}`)}
               onToggleLike={handleToggleLike}
             />

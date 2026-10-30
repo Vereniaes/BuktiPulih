@@ -1,0 +1,17 @@
+/* Todo:
+-> Fill the map surface without changing the surrounding page layout.
+-> Keep loading, credits, and recovery actions readable on small screens.
+*/
+
+/* --- Map surface --- */
+.renderer,.canvas { position:absolute; inset:0; min-width:0; min-height:0; }
+.renderer { overflow:hidden; background:#e8ece2; }
+.renderer :global(.maplibregl-ctrl-attrib) { font-size:10px; line-height:1.45; font-family:inherit; max-width:calc(100vw - 40px); }
+.renderer :global(.maplibregl-ctrl-attrib a) { color:#153b31; }
+.renderer :global(.maplibregl-ctrl-attrib-button) { min-width:24px; min-height:24px; }
+.loading { position:absolute; top:74px; left:50%; transform:translateX(-50%); background:#fffdf7; padding:9px 14px; border:1px solid #ddd5c4; border-radius:6px; color:#345447; font-size:12px; white-space:nowrap; pointer-events:none; }
+.notice { position:absolute; z-index:3; top:100px; left:50%; transform:translateX(-50%); display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; width:max-content; max-width:calc(100% - 32px); padding:10px 14px; border:1px solid #d8c9b5; border-radius:8px; background:#fffdf7; color:#3b4940; font-size:12px; }
+.notice button { min-height:44px; padding:0 8px; border:0; background:transparent; color:#075e34; font:inherit; font-weight:600; text-decoration:underline; cursor:pointer; }
+.notice button:focus-visible { outline:2px solid #075e34; outline-offset:2px; }
+@media(max-width:640px) { .notice { width:calc(100% - 32px); } }
+/* --- end of Map surface --- */

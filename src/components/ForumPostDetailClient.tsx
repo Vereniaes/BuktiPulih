@@ -1,6 +1,8 @@
-// Read the post and join its account-based discussion.
+// Todo:
+// -> read a post, its media and account-based discussion
 "use client";
 
+// --- Post details ---
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { ForumPost } from "@/types";
@@ -9,6 +11,9 @@ import { SharePostButton } from "./forum/SharePostButton";
 import { REGION_TABS } from "@/utils/plotDisplay";
 import { ProfileAvatar } from "./account/ProfileAvatar";
 import { ForumComments } from "./forum/ForumComments";
+import { MediaGallery } from "./evidence/MediaGallery";
+import { getPostMedia } from "@/utils/evidenceMedia";
+import { categoryLabel } from "@/utils/recoveryEvidence";
 import styles from "./forum/post-detail.module.css";
 
 interface ForumPostDetailClientProps {
@@ -29,7 +34,6 @@ export function ForumPostDetailClient({ post }: ForumPostDetailClientProps) {
   const [language, setLanguage] = useState<"id" | "en">("id");
   const [liked, setLiked] = useState(Boolean(post.metrics.user_has_liked));
   const [likes, setLikes] = useState(post.metrics.likes);
-  const [mediaFailed, setMediaFailed] = useState(false);
 
   useEffect(() => {
     try {
@@ -57,8 +61,7 @@ export function ForumPostDetailClient({ post }: ForumPostDetailClientProps) {
     cacheForumPost({ ...cached, metrics: { ...cached.metrics, likes: nextLikes, user_has_liked: nextLiked } });
   };
 
-  const conditions = language === "id" ? { subur: "Tumbuh subur", perlu_rawat: "Perlu rawat", kritis: "Kritis", mati: "Mati" } : { subur: "Thriving", perlu_rawat: "Needs care", kritis: "Critical", mati: "Dead" };
-  const condition = post.status_condition || (post.condition ? conditions[post.condition] : "");
+  const condition = post.status_condition || (post.condition ? categoryLabel("condition",post.condition,language) : "");
   const waterTable = post.water_table_depth_cm;
   const province = REGION_TABS.find(region => region.key === post.region_key)?.province;
   const authorName = post.author.username || (language === "id" ? "Warga" : "Community member");
@@ -102,19 +105,7 @@ export function ForumPostDetailClient({ post }: ForumPostDetailClientProps) {
               </figure>
             ))}
           </div>
-        ) : post.media.url && !mediaFailed ? (
-          <figure className={styles.media}>
-            {post.media.type === "video" ? (
-              <video src={post.media.url} poster={post.media.thumbnail_url} controls preload="metadata" onError={() => setMediaFailed(true)} aria-label={post.location_name} />
-            ) : (
-              <img src={post.media.url} alt={`${language === "id" ? "Dokumentasi" : "Report media"}: ${post.location_name}`} onError={() => setMediaFailed(true)} />
-            )}
-          </figure>
-        ) : (
-          <div className={styles.mediaFallback} role="img" aria-label={language === "id" ? "Media tidak dapat dimuat" : "Media unavailable"}>
-            {language === "id" ? "Media tidak dapat dimuat" : "Media unavailable"}
-          </div>
-        )}
+        ) : <MediaGallery items={getPostMedia(post)} label={post.location_name} language={language} />}
 
         <p className={styles.caption}>{post.caption}</p>
 
@@ -148,3 +139,4 @@ export function ForumPostDetailClient({ post }: ForumPostDetailClientProps) {
     </div>
   );
 }
+// --- end of Post details ---

@@ -1,3 +1,7 @@
+// Todo:
+// -> Verify map filters, imagery dates and device budgets.
+
+// --- Satellite behavior ---
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -28,7 +32,8 @@ test("quality respects a manual choice and constrained devices",()=>{
  assert.equal(useLowGraphics("detail",{memory:2,saveData:true}),false);
  assert.equal(useLowGraphics("low",{memory:16,cores:16}),true);
  for(const hints of [{saveData:true},{memory:2},{cores:2},{connection:"3g"},{mobile:true}])assert.equal(useLowGraphics("auto",hints),true);
- assert.equal(useLowGraphics("auto",{memory:8,cores:8,connection:"4g"}),false);
+ assert.equal(useLowGraphics("auto",{memory:8,cores:8,connection:"4g"}),true);
+ assert.equal(useLowGraphics("auto",{memory:16,cores:8,connection:"4g"}),false);
 });
 test("missing black fill is transparent without erasing dark observed colors",()=>{
  const pixels=new Uint8ClampedArray([0,0,0,255,1,2,3,255,100,140,180,255,0,0,0,0]);
@@ -106,3 +111,5 @@ test("unavailable calendar gaps and future hours cannot be chosen",()=>{
  assert.equal(isHotspotHourAvailable("2026-10-24T07",availability,now),true);
  assert.equal(readHotspotRange("2026-10-27T07:15","2026-10-27T08",now).error,"invalid");
 });
+
+// --- end of Satellite behavior ---

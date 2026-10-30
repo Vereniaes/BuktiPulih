@@ -1,0 +1,21 @@
+/* Todo:
+-> present one photo or video with compact gallery navigation
+*/
+
+/* --- Media gallery --- */
+.gallery { --media-height:600px; min-width:0; overflow:hidden; }
+.feed { --media-height:470px; }
+.panel { --media-height:280px; }
+.frame { background:#e9ece5; }
+.frame img, .frame video { display:block; width:100%; max-height:var(--media-height); object-fit:contain; }
+.frame a { display:block; }
+.open { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; }
+.unavailable { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; min-height:150px; margin:0; padding:24px 16px; color:#52645a; font-size:13px; }
+.unavailable a { color:var(--stamp); text-decoration:underline; text-underline-offset:3px; }
+.controls { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 10px; border-top:1px solid var(--surface-border); background:var(--surface-card,#fff); }
+.controls button { display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid var(--surface-border); border-radius:7px; background:transparent; color:var(--stamp); cursor:pointer; }
+.controls button:disabled { opacity:.4; cursor:default; }
+.controls svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.controls span { color:#52645a; font-size:13px; font-variant-numeric:tabular-nums; }
+.gallery a:focus-visible, .gallery button:focus-visible { outline:3px solid #b7ddc3; outline-offset:-3px; }
+/* --- end of Media gallery --- */

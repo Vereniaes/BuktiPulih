@@ -1,6 +1,12 @@
-/* Cream controls and a selected-plot panel with room for the map on phones. */
+/* Todo:
+   -> Keep recovery controls and selected details clear above the map.
+   -> Fit desktop and phone screens without hiding map actions.
+*/
+
+/* --- Recovery layout --- */
 .shell { position:relative; width:100%; height:100%; overflow:hidden; isolation:isolate; color:var(--ink); background:var(--surface-bg); --muted:#56665d; --accent:#2d5a43; }
 .stage { position:relative; width:100%; height:100%; }
+.viewControls { display:contents; }
 .map { position:absolute; inset:0; z-index:0; background:#e5eceb; }
 .shell button,.shell input,.shell select { font:inherit; }
 .shell button { color:inherit; cursor:pointer; }
@@ -25,23 +31,11 @@
 .empty { position:absolute; z-index:490; left:50%; top:48%; transform:translate(-50%,-50%); width:250px; text-align:center; padding:18px; border:1px solid var(--surface-border); border-radius:8px; background:var(--surface-bg); font-size:13px; }
 .empty strong,.empty span { display:block; margin-bottom:7px; }
 .empty span { color:var(--muted); }
-.notice { position:absolute; z-index:480; top:110px; right:70px; padding:9px 12px; background:var(--surface-bg); color:#865012; font-size:11px; max-width:220px; }
-.legend { position:absolute; z-index:450; bottom:24px; left:16px; display:flex; gap:14px; padding:10px 12px; background:var(--surface-bg); border:1px solid var(--surface-border); border-radius:6px; font-size:11px; }
+.legend { position:absolute; z-index:450; bottom:24px; left:16px; max-width:calc(100% - 300px); display:flex; flex-wrap:wrap; gap:10px 14px; padding:10px 12px; background:var(--surface-bg); border:1px solid var(--surface-border); border-radius:6px; font-size:11px; }
 .legend span { display:flex; align-items:center; gap:6px; }
 .legend i { width:8px; height:8px; border-radius:50%; }
 .detail { position:absolute; z-index:501; top:97px; bottom:24px; left:16px; width:338px; min-height:0; overflow:hidden; border:1px solid var(--surface-border); border-radius:12px; background:var(--surface-bg); box-shadow:0 4px 16px #15291b14; outline:none; }
-.shell[data-detail=true] .legend { left:370px; }
-.pin { display:grid; place-items:center; background:none; border:0; filter:drop-shadow(0 2px 2px #16342540); }
-.selected svg { filter:drop-shadow(0 0 3px #122f1f); transform:scale(1.14); }
-.pin:focus-visible,.cluster:focus-visible { outline:3px solid #102e20!important; outline-offset:3px; border-radius:10px; }
-.cluster { display:grid; place-items:center; background:#c6d9c9cc; border-radius:50%; border:1px solid #2d65484d; }
-.cluster span { display:grid; place-items:center; width:34px; height:34px; border:2px solid #fffdf7; border-radius:50%; background:#2d6548; color:white; font-family:inherit; font-weight:700; font-size:13px; }
-.shell :global(.leaflet-control-zoom) { border:1px solid var(--surface-border); border-radius:6px; overflow:hidden; box-shadow:none; margin-right:16px; margin-bottom:16px; }
-.shell :global(.leaflet-control-zoom a) { width:44px; height:44px; line-height:44px; background:var(--surface-bg); color:var(--ink); border-color:var(--surface-border); }
-.shell :global(.leaflet-control-scale) { margin-right:16px; }
-.shell :global(.leaflet-control-scale-line) { background:var(--surface-bg); border-color:var(--accent); color:var(--ink); font-size:10px; }
-.shell :global(.leaflet-control-attribution) { background:var(--surface-bg); color:var(--muted); font-size:9px; }
-.shell :global(.leaflet-control-attribution a) { color:var(--accent); }
+.shell[data-detail=true] .legend { left:370px; right:280px; max-width:none; }
 @media(max-width:700px) {
   .topbar { top:10px; left:10px; right:64px; gap:8px; justify-content:space-between; padding:8px 9px 8px 12px; }
   .heading h1 { font-size:14px; }
@@ -54,25 +48,23 @@
   .shell[data-detail=true] .stage { height:46%; }
   .shell[data-detail=true] .legend { display:none; }
   .shell[data-detail=true] .tools { display:none; }
-  .shell[data-detail=true] :global(.leaflet-control-zoom) { margin-bottom:12px; }
-  .legend { left:10px; right:64px; bottom:24px; flex-wrap:wrap; gap:8px 12px; padding:9px; font-size:10px; }
-  .shell :global(.leaflet-control-zoom) { margin-right:10px; }
-  .shell :global(.leaflet-control-scale) { margin-right:10px; }
-  .notice { top:90px; right:10px; }
+  .shell:has([data-weather-detail]) .legend,.shell:has([data-weather-panel]) .legend { display:none; }
+  .shell:has([data-weather-legend]) .legend { top:96px; right:auto; bottom:auto; max-width:calc(100% - 90px); }
+  .shell:has([data-weather-panel]) .tools,.shell:has([data-weather-panel]) .topbar,
+  .shell:has([data-weather-detail]) .tools,.shell:has([data-weather-detail]) .topbar { visibility:hidden; }
+  .legend { left:10px; right:10px; bottom:180px; max-width:none; gap:8px 12px; padding:9px; font-size:10px; }
 }
 
 
-@media(max-height:650px) and (max-width:700px) { .detail { top:35%; } .shell[data-detail=true] .stage { height:35%; } }
+@media(max-height:650px) and (max-width:700px) { .detail { top:50%; } .shell[data-detail=true] .stage { height:50%; } }
 
 @media(max-height:500px) and (min-width:701px) { .detail { top:8px; bottom:8px; } .shell[data-detail=true] .topbar { left:370px; right:74px; gap:8px; } .heading h1 { font-size:14px; } }
 
-@media(max-width:700px) { .shell[data-detail=true][data-expanded=true] .stage { height:20%; } .shell[data-expanded=true] .detail { top:20%; } .shell[data-expanded=true] .topbar { display:none; } }
+@media(max-width:700px) { .shell[data-detail=true][data-expanded=true] .stage { height:20%; } .shell[data-expanded=true] .detail { top:20%; } .shell[data-expanded=true] .topbar,.shell[data-expanded=true] .viewControls { display:none; } }
 
-.reportPin { display:grid; place-items:center; filter:drop-shadow(0 1px 2px #47281333); }
-.selectedReport svg { transform:scale(1.15); filter:drop-shadow(0 0 2px #ad5a24); }
-.reportCluster { background:#f1d4aacc; border:1px dashed #ad5a24; }
-.reportCluster span { background:#ad5a24; }
 .legend .reportLegend { width:11px; height:11px; background:#fff9ef; border:2px dashed #ad5a24; }
 .reportNotice { position:absolute; z-index:490; top:100px; right:70px; max-width:310px; border:1px solid var(--surface-border); border-radius:6px; padding:10px 12px; background:var(--surface-bg); color:var(--muted); font-size:12px; line-height:1.6; }
 .reportNotice button { border:0; min-height:36px; padding:0 6px; text-decoration:underline; color:var(--accent); background:none; }
-@media(max-width:700px) { .reportNotice { top:88px; left:10px; right:64px; max-width:none; } .legend { max-width:310px; } }
+@media(max-width:700px) { .reportNotice { top:88px; left:10px; right:64px; max-width:none; } }
+
+/* --- end of Recovery layout --- */

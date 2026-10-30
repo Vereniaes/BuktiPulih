@@ -1,12 +1,15 @@
-// Browse real Street View and select its current position only on explicit confirmation.
+// Todo:
+// -> Browse real Street View with coverage and error states.
+// -> Select a report position only when a picker is provided.
 "use client";
+// --- Street View dialog ---
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { googleLibrary, GOOGLE_MAPS_AUTH_ERROR } from "@/lib/google-maps";
 import { keepDialogFocus } from "@/utils/dialogFocus";
 import { validCoordinates } from "@/utils/recoveryEvidence";
 import { MapIcon } from "../hazards/MapIcon";
 import styles from "./evidence-form.module.css";
-interface Props { point: [number, number]; language: "id" | "en"; onClose: () => void; onPick: (point: [number, number]) => void; }
+interface Props { point: [number, number]; language: "id" | "en"; onClose: () => void; onPick?: (point: [number, number]) => void; }
 export function StreetViewDialog({ point, language, onClose, onPick }: Props) {
   const en = language === "en", dialog = useRef<HTMLDialogElement>(null), canvas = useRef<HTMLDivElement>(null);
   const panorama = useRef<google.maps.StreetViewPanorama | null>(null);
@@ -42,7 +45,7 @@ export function StreetViewDialog({ point, language, onClose, onPick }: Props) {
   }, [attempt]);
   const choose = () => {
     const position = panorama.current?.getPosition(); if (!position || status !== "ready") return;
-    const point: [number, number] = [position.lng(), position.lat()]; if (validCoordinates(point)) onPick(point);
+    const point: [number, number] = [position.lng(), position.lat()]; if (validCoordinates(point)) onPick?.(point);
   };
   return <dialog ref={dialog} className={styles.streetDialog} onKeyDown={keepDialogFocus} aria-label="Street View" onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose(); }}>
     <header className={styles.streetHeader}><button type="button" onClick={onClose} aria-label={en ? "Back to map" : "Kembali ke peta"}><MapIcon name="back" />{en ? "Back" : "Kembali"}</button><h2>Street View</h2></header>
@@ -50,6 +53,7 @@ export function StreetViewDialog({ point, language, onClose, onPick }: Props) {
       <div ref={canvas} inert={status !== "ready"} className={styles.streetCanvas} aria-label={en ? "Explore Street View" : "Jelajahi Street View"} />
       {status !== "ready" && <div className={styles.streetMessage} role="status"><p>{status === "empty" ? (en ? "Street View is unavailable at this point." : "Street View belum tersedia di titik ini.") : status === "error" ? (en ? "Street View could not load." : "Street View belum dapat dimuat.") : (en ? "Loading Street View…" : "Memuat Street View…")}</p>{status === "error" && <button type="button" onClick={() => { dialog.current?.querySelector("button")?.focus(); setStatus("loading"); setAttempt(attempt + 1); }}>{en ? "Try again" : "Coba lagi"}</button>}</div>}
     </div>
-    <footer className={styles.streetFooter}><button type="button" onClick={choose} disabled={status !== "ready"}>{en ? "Select this location" : "Pilih lokasi ini"}<MapIcon name="pin" /></button></footer>
+    {onPick && <footer className={styles.streetFooter}><button type="button" onClick={choose} disabled={status !== "ready"}>{en ? "Select this location" : "Pilih lokasi ini"}<MapIcon name="pin" /></button></footer>}
   </dialog>;
 }
+// --- end of Street View dialog ---

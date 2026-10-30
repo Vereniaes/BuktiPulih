@@ -1,8 +1,12 @@
-// Layer controls and selected observations share a compact, dismissible panel.
+// Todo:
+// -> Show satellite filters, source states and selected details.
+// -> Open terrain exploration around a thermal detection.
 "use client";
+// --- Satellite panel ---
 import { useEffect, useRef } from "react";
 import type { IspuStation } from "@/types/air-quality";
 import { AirStationDetail } from "./AirStationDetail";
+import { HotspotCoordinates } from "./HotspotCoordinates";
 import type { HotspotObservation } from "@/types/environment";
 import type { WindPoint } from "@/services/api";
 import type { ImageryProduct } from "@/lib/mapImagery";
@@ -29,6 +33,7 @@ interface Props {
   results:HotspotObservation[]; selected:Selected|null; select:(point:HotspotObservation)=>void;
   selectStation:(station:IspuStation)=>void;
   clearSelection:()=>void; areaActive:boolean; clearArea:()=>void; imageError:boolean;
+  onExplore:()=>void;
 }
 export function HazardPanel(p:Props) {
   const {en,sources,filters,selected}=p;
@@ -45,9 +50,10 @@ export function HazardPanel(p:Props) {
     }
     const source=key==="imagery"?sources.imagery:sources[key];
     if(!p.enabled[key])return key==="fire"?"NASA FIRMS":"NASA GIBS";
+    if(key==="imagery"&&sources.imagery.data?.length&&sources.imagery.cached)return t("Katalog tersimpan · NASA GIBS","Cached catalog · NASA GIBS");
     if(source.loading)return t("Memuat…","Loading…");
-    if(source.error||key==="imagery"&&p.imageError)return t("Sumber belum tersedia","Source unavailable");
-    if(key==="fire")return `${p.results.length} ${t("deteksi · NASA FIRMS","detections · NASA FIRMS")}`;
+    if(source.error||key==="imagery"&&p.imageError)return source.data?t("Pembaruan gagal · data tersimpan","Refresh failed · cached data"):t("Sumber belum tersedia","Source unavailable");
+    if(key==="fire")return `${p.results.length} ${t("deteksi · NASA FIRMS","detections · NASA FIRMS")}${sources.fire.data?.status==="cached"?t(" · Tersimpan"," · Cached"):sources.fire.data?.status==="partial"?t(" · Sebagian"," · Partial"):""}`;
     return p.imageLoading?`${t("Memuat citra","Loading imagery")} ${p.tileProgress.loaded}/${p.tileProgress.total||"…"}`:`${p.product?.label??"NASA GIBS"} · ${p.date}`;
   };
   return <aside className={styles.panel} aria-label={t("Lapisan dan filter","Layers and filters")}>
@@ -59,7 +65,7 @@ export function HazardPanel(p:Props) {
       <button className={styles.back} onClick={p.clearSelection}><MapIcon name="back"/>{t("Kembali ke lapisan","Back to layers")}</button>
       <span className={styles.detailTag}>{selected.kind==="fire"?"NASA FIRMS":"ECMWF IFS"}</span>
       <h3 ref={detailHeading} tabIndex={-1}>{selected.kind==="fire"?t("Titik panas terdeteksi","Thermal detection"):t("Angin permukaan","Surface wind")}</h3>
-      <p className={styles.coordinates}>{selected.point.coordinates.map(v=>v.toFixed(4)).join(", ")}</p>
+      {selected.kind==="fire"?<HotspotCoordinates coordinates={selected.point.coordinates} en={en}/>:<p className={styles.coordinates}>{selected.point.coordinates.map(v=>v.toFixed(4)).join(", ")}</p>}
       <dl className={styles.detailList}>
         <dt>{t("Waktu data","Data time")}</dt><dd>{formatTimeWib(selected.point.observed_at)}</dd>
         {selected.kind==="fire"?<>
@@ -71,7 +77,8 @@ export function HazardPanel(p:Props) {
           <dt>{t("Berasal dari","Coming from")}</dt><dd>{selected.point.direction_deg}°</dd>
         </>}
       </dl>
-      <p className={styles.note}>{selected.kind==="fire"?t("Anomali panas satelit; bukan batas luas kebakaran.","A satellite thermal anomaly, not a burned-area boundary."):t("Sampel model angin pada ketinggian 10 m.","Model wind at 10 m.")}</p>
+      {selected.kind==="wind"&&<p className={styles.note}>{t("Sampel model angin pada ketinggian 10 m.","Model wind at 10 m.")}</p>}
+      {selected.kind==="fire"&&<button type="button" className={styles.exploreButton} onClick={p.onExplore}><MapIcon name="extent"/>{t("Jelajahi sekitar","Explore surroundings")}</button>}
       <a className={styles.sourceLink} href={selected.kind==="fire"?"https://firms.modaps.eosdis.nasa.gov/map/":"https://open-meteo.com/en/docs"} target="_blank" rel="noreferrer">{t("Buka sumber data","Open data source")} ↗</a>
     </div>:<>
       <div className={styles.tabs} role="group" aria-label={t("Isi panel","Panel content")}>
@@ -83,8 +90,8 @@ export function HazardPanel(p:Props) {
           {(["fire","imagery","wind"] as LayerKey[]).map(key=><section className={styles.layer} key={key}>
             <label className={styles.layerToggle}>
               <span className={`${styles.swatch} ${styles[key]}`}/>
-              <span className={styles.layerLabel}><strong>{key==="fire"?t("Titik panas","Hotspots"):key==="imagery"?t("Citra satelit","Satellite imagery"):t("Udara & angin","Air & wind")}</strong><small>{status(key)}</small></span>
-              <input type="checkbox" checked={p.enabled[key]} onChange={()=>p.toggle(key)} aria-label={key==="fire"?t("Titik panas NASA","NASA hotspots"):key==="imagery"?t("Citra satelit","Satellite imagery"):t("Udara & angin","Air & wind")}/>
+              <span className={styles.layerLabel}><strong>{key==="fire"?t("Titik panas","Hotspots"):key==="imagery"?t("Citra satelit","Satellite imagery"):t("Kualitas Udara","Air quality")}</strong><small>{status(key)}</small></span>
+              <input type="checkbox" checked={p.enabled[key]} onChange={()=>p.toggle(key)} aria-label={key==="fire"?t("Titik panas NASA","NASA hotspots"):key==="imagery"?t("Citra satelit","Satellite imagery"):t("Kualitas Udara","Air quality")}/>
             </label>
             {p.enabled[key]&&<div className={styles.layerSettings}>
               {key==="fire"?<>
@@ -94,12 +101,19 @@ export function HazardPanel(p:Props) {
                   <label>{t("Keyakinan deteksi","Detection confidence")}<select aria-label={t("Keyakinan deteksi","Detection confidence")} value={filters.confidence} onChange={e=>field("confidence",e.target.value)}><option value="all">{t("Semua tingkat","All levels")}</option><option value="high">{t("Tinggi","High")}</option><option value="nominal">Nominal</option><option value="low">{t("Rendah","Low")}</option></select></label>
                   <label>{t("Daya radiasi minimum","Minimum radiative power")}<select aria-label={t("Daya radiasi minimum","Minimum radiative power")} value={filters.frp} onChange={e=>field("frp",Number(e.target.value))}><option value={0}>{t("Semua nilai","Any value")}</option>{[5,10,25,50].map(n=><option key={n} value={n}>≥ {n} MW</option>)}</select></label>
                 </details>
-                {sources.fire.error&&<p className={styles.warning}>{sources.fire.errorCode==="HOTSPOT_DATE_UNAVAILABLE"?t("Data NASA belum tersedia untuk tanggal tersebut.","NASA data are unavailable for those dates."):sources.fire.errorCode==="INVALID_TIME_RANGE"?t("Pilih rentang tanggal dan jam yang valid, maksimal 5 hari.","Choose a valid date/time range of at most 5 days."):t("Titik panas belum tersedia. Coba muat ulang sumber.","Hotspots unavailable. Try reloading sources.")}</p>}
-                {sources.fire.data?.status!==undefined&&sources.fire.data.status!=="complete"&&<p className={styles.warning}>{sources.fire.data.status==="cached"?t("Menampilkan data tersimpan.","Showing cached observations."):t("Sebagian data belum tersedia.","Some data are unavailable.")}</p>}
+                {sources.fire.error&&<p className={styles.warning}>{sources.fire.errorCode==="HOTSPOT_DATE_UNAVAILABLE"?t("Data NASA belum tersedia untuk tanggal tersebut.","NASA data are unavailable for those dates."):sources.fire.errorCode==="INVALID_TIME_RANGE"?t("Pilih rentang tanggal dan jam yang valid, maksimal 5 hari.","Choose a valid date/time range of at most 5 days."):sources.fire.data?t("Pembaruan titik panas gagal. Coba muat ulang sumber.","Hotspot refresh failed. Try reloading sources."):t("Titik panas belum tersedia. Coba muat ulang sumber.","Hotspots unavailable. Try reloading sources.")}</p>}
+                {(sources.fire.cached||sources.fire.data?.status==="cached")&&<p className={styles.warning}>{t("Menampilkan data tersimpan.","Showing cached observations.")}</p>}
+                {sources.fire.data?.status==="partial"&&<p className={styles.warning}>{t("Sebagian data belum tersedia.","Some data are unavailable.")}</p>}
+                {sources.fire.data&&<p className={styles.note}>
+                  {t("Pengamatan terakhir","Latest observation")}: {sources.fire.data.observed_at?formatTimeWib(sources.fire.data.observed_at):t("belum tersedia","unavailable")}<br/>
+                  {t("Diambil","Retrieved")}: {formatTimeWib(sources.fire.data.fetched_at)}
+                </p>}
+                {sources.fire.checked_at&&<p className={styles.note}>{t("Diperiksa","Last checked")}: {formatTimeWib(sources.fire.checked_at)}</p>}
               </>:key==="imagery"?<>
                 <details><summary>{t("Tampilan citra","Imagery settings")}</summary>
                   <label>{t("Sumber citra","Imagery source")}<select aria-label={t("Sumber citra","Imagery source")} value={p.product?.id??""} onChange={e=>p.setProduct(e.target.value)} disabled={!p.product}>{!p.product&&<option value="">{t("Belum tersedia","Unavailable")}</option>}{sources.imagery.data?.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
                   <label>{t("Tanggal citra · UTC","Image date · UTC")}<select aria-label={t("Tanggal citra · UTC","Image date · UTC")} value={p.date} onChange={e=>p.setDate(e.target.value)} disabled={!p.product}>{!p.product&&<option value="">—</option>}{p.product?.dates.map(date=><option key={date}>{date}</option>)}</select></label>
+                  {sources.imagery.fetched_at&&<p className={styles.note}>{t("Katalog diambil","Catalog retrieved")}: {formatTimeWib(sources.imagery.fetched_at)}</p>}
                   <label>{t("Opasitas","Opacity")} <output>{p.opacity}%</output><input aria-label={t("Opasitas","Opacity")} type="range" min="0" max="100" step="5" value={p.opacity} onChange={e=>p.setOpacity(Number(e.target.value))}/></label>
                   <label>{t("Kecerahan","Brightness")} <output>{p.brightness}%</output><input aria-label={t("Kecerahan citra","Image brightness")} type="range" min="60" max="160" step="5" value={p.brightness} onChange={e=>p.setBrightness(Number(e.target.value))}/></label>
                   <label>{t("Kontras","Contrast")} <output>{p.contrast}%</output><input aria-label={t("Kontras citra","Image contrast")} type="range" min="60" max="160" step="5" value={p.contrast} onChange={e=>p.setContrast(Number(e.target.value))}/></label>
@@ -129,7 +143,7 @@ export function HazardPanel(p:Props) {
               <option value="low">Basic</option><option value="detail">Detailed</option>
             </select></label>
           </div>
-          <div className={styles.panelFoot}><a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA Worldview ↗</a><p>{t("Peta dimuat ulang setiap 5 menit.","Map refreshed every 5 minutes.")}</p></div>
+          <div className={styles.panelFoot}><a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA Worldview ↗</a><p>{t("API titik panas diperiksa setiap 5 menit. Waktu pengamatan mengikuti satelit.","The hotspot API is checked every 5 minutes. Observation time follows the satellite.")}</p></div>
         </>:<>
           <div className={styles.resultsHeading}><strong>{sources.fire.data?p.results.length:"—"} {t("deteksi","detections")}</strong>{p.areaActive&&<button onClick={p.clearArea}>{t("Semua area","All areas")}</button>}</div>
           <p className={styles.note}>{t("Terbaru dahulu · pilih untuk melihat lokasi","Newest first · select to locate")}</p>
@@ -140,3 +154,4 @@ export function HazardPanel(p:Props) {
     </>}
   </aside>;
 }
+// --- end of Satellite panel ---

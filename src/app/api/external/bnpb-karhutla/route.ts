@@ -11,9 +11,9 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   if (shouldRefresh) {
     const result = await syncBnpbData();
-    return NextResponse.json(result.data);
+    return NextResponse.json(result.data, { headers: { "Cache-Control": "no-store" } });
   }
 
-  return NextResponse.json(getCachedBnpbData());
+  return NextResponse.json(getCachedBnpbData(), { headers: { "Cache-Control": "no-store" } });
 }
 // --- end of BNPB response ---

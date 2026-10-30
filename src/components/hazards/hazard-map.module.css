@@ -1,4 +1,7 @@
-/* Satellite map controls stay readable above imagery on desktop and mobile. */
+/* Todo:
+   -> Keep satellite layers and detail controls readable on every screen.
+*/
+/* --- Satellite map layout --- */
 .shell { position:relative; isolation:isolate; width:100%; height:100%; min-height:0; overflow:hidden; color:var(--ink); background:var(--surface-bg); --panel:var(--surface-bg); --line:var(--surface-border); --muted:#56665d; --accent:#2d5a43; --control-border:#7b826f; font-size:12px; }
 .map { position:absolute; inset:0; z-index:0; background:#e5eceb; }
 .shell button,.shell select,.shell input { font:inherit; }
@@ -71,6 +74,9 @@
 .back { display:flex; align-items:center; gap:5px; min-height:44px; border:0; background:none; padding:0; color:var(--muted)!important; margin-bottom:16px; }
 .detailTag { color:var(--accent); font-size:10px; font-weight:700; letter-spacing:.8px; }
 .coordinates { color:var(--muted); font-variant-numeric:tabular-nums; }
+.locationRow { display:flex; flex-wrap:wrap; gap:4px 8px; line-height:1.6; }
+.locationRow span { overflow-wrap:anywhere; }
+.locationRow span+span::before { content:"·"; margin-right:8px; }
 .detailList { padding:15px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .detailList dt { color:var(--muted); margin-top:14px; font-size:10px; }
 .detailList dt:first-child { margin:0; }
@@ -157,3 +163,14 @@
 .airStation span { pointer-events:auto; }
 
 @media (max-width:860px) { .hourFields select { font-size:16px; } }
+
+.exploreButton { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; min-height:44px; padding:10px 14px; margin:18px 0; border:1px solid #2d5a43; border-radius:6px; background:#2d5a43; color:#fff!important; font-weight:650!important; }
+.legend { max-width:calc(100% - 334px); }
+@media(max-width:860px) {
+  .legend { bottom:180px; max-width:calc(100% - 24px); }
+  .shell:has([data-weather-legend]) .legend { top:68px; bottom:auto; max-width:calc(100% - 90px); }
+  .shell:has([data-weather-panel]) .tools,.shell:has([data-weather-panel]) .topbar,
+  .shell:has([data-weather-detail]) .tools,.shell:has([data-weather-detail]) .topbar { visibility:hidden; }
+  .shell[data-exploring=true] .tools,.shell[data-exploring=true] .legend,.shell:has([data-weather-detail]) .legend,.shell:has([data-weather-panel]) .legend { display:none; }
+}
+/* --- end of Satellite map layout --- */

@@ -1,11 +1,14 @@
-// Show one post, its media, and its available actions.
+// Todo:
+// -> show a post, its media gallery and available actions
 "use client";
 
-import { useState } from "react";
+// --- Post card ---
 import Link from "next/link";
 import type { ForumPost } from "@/types";
 import styles from "./forum.module.css";
 import { ProfileAvatar } from "../account/ProfileAvatar";
+import { MediaGallery } from "../evidence/MediaGallery";
+import { getPostMedia } from "@/utils/evidenceMedia";
 
 interface ForumPostCardProps {
   post: ForumPost;
@@ -16,7 +19,6 @@ interface ForumPostCardProps {
 }
 
 export function ForumPostCard({ post, language, published, onOpen, onToggleLike }: ForumPostCardProps) {
-  const [mediaFailed, setMediaFailed] = useState(false);
   const format = (value: number) => new Intl.NumberFormat(language === "id" ? "id-ID" : "en-US").format(value);
   const date = new Date(post.created_at);
   const dateLabel = Number.isNaN(date.getTime()) ? (language === "id" ? "Tanggal tidak tersedia" : "Date unavailable") : new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-GB", {
@@ -25,16 +27,10 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
   const author = post.author.username;
   const detailHref = `/forum/${encodeURIComponent(post.id)}`;
   const openLabel = language === "id" ? "Baca catatan lengkap" : "Read full post";
-  const imageAlt = language === "id" ? `Dokumentasi lapangan oleh ${author}` : `Field documentation by ${author}`;
 
   const open = (label: string, className: string) => published
     ? <Link className={className} href={detailHref}>{label}</Link>
     : <button className={className} type="button" onClick={() => onOpen?.(post)}>{label}</button>;
-
-  const image = <img className={styles.media} src={post.media.thumbnail_url || post.media.url}
-    alt={imageAlt}
-    loading="lazy" decoding="async" onError={() => setMediaFailed(true)}
-    ref={node => { if (node?.complete && !node.naturalWidth) setMediaFailed(true); }} />;
 
   return (
     <article className={styles.card} aria-label={language === "id" ? `Catatan dari ${author}` : `Post by ${author}`}>
@@ -51,22 +47,7 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
         <span>{post.location_name}</span>
       </p>
 
-      {post.media?.url && !mediaFailed && (
-        post.media.type === "video" ? (
-          <video className={styles.media} controls preload="metadata" src={post.media.url} poster={post.media.thumbnail_url}
-            ref={node => { if (node?.error) setMediaFailed(true); }} onError={() => setMediaFailed(true)}
-            aria-label={language === "id" ? `Video dari ${author}` : `Video by ${author}`} />
-        ) : published ? (
-          <Link className={styles.mediaLink} href={detailHref} aria-label={language === "id" ? `Lihat foto dari ${author}` : `View photo by ${author}`}>
-            {image}
-          </Link>
-        ) : (
-          <button className={styles.mediaLink} type="button" onClick={() => onOpen?.(post)} aria-label={language === "id" ? `Lihat foto dari ${author}` : `View photo by ${author}`}>
-            {image}
-          </button>
-        )
-      )}
-      {mediaFailed && <p className={styles.mediaFallback}>{language === "id" ? "Media tidak dapat dimuat." : "Media could not be loaded."}</p>}
+      {post.media?.url && <MediaGallery items={getPostMedia(post)} label={post.location_name} language={language} variant="feed" href={published ? detailHref : undefined} onOpen={published ? undefined : () => onOpen?.(post)} />}
 
       <p className={styles.caption}>{post.caption}</p>
       {open(openLabel, styles.readMore)}
@@ -99,3 +80,4 @@ export function ForumPostCard({ post, language, published, onOpen, onToggleLike 
     </article>
   );
 }
+// --- end of Post card ---

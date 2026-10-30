@@ -1,32 +1,44 @@
-// Show the selected photo or video and keep the native file picker accessible.
+// Todo:
+// -> preview up to five selected photos and videos
+// -> keep adding, switching and removing files accessible
+/* eslint-disable @next/next/no-img-element -- Local previews use object URLs. */
 "use client";
-import { useId, useRef } from "react";
+
+// --- Media field ---
+import { useId, useRef, useState } from "react";
 import { MapIcon } from "../hazards/MapIcon";
+import type { EvidenceFile } from "./useEvidenceMedia";
+import { EVIDENCE_ACCEPT, EVIDENCE_FILE_LIMIT } from "@/utils/evidenceMedia";
 import styles from "./evidence-form.module.css";
 interface Props {
-  file: File | null; preview: string; disabled: boolean; language: "id" | "en";
-  onChange: (file?: File) => void; onRemove: () => void; onMeasure: (width: number, height: number) => void;
+  items: EvidenceFile[]; disabled: boolean; language: "id" | "en";
+  onChange: (files: File[]) => void; onRemove: (id: string) => void; onMeasure: (id: string, width: number, height: number) => void;
 }
-export function EvidenceMediaField({ file, preview, disabled, language, onChange, onRemove, onMeasure }: Props) {
+export function EvidenceMediaField({ items, disabled, language, onChange, onRemove, onMeasure }: Props) {
   const id = useId(), input = useRef<HTMLInputElement>(null), en = language === "en";
-  const remove = () => { if (input.current) { input.current.value = ""; input.current.focus(); } onRemove(); };
+  const [selected,setSelected] = useState<string | null>(null), [failed,setFailed] = useState<string[]>([]);
+  const item = items.find(entry => entry.id === selected) ?? items[0];
+  const remove = () => { if (!item) return; onRemove(item.id); requestAnimationFrame(() => input.current?.focus()); };
   return <section className={styles.media}>
-    <label id={`${id}-label`} htmlFor={id}>{en ? "Photo or video" : "Foto atau video"}</label>
+    <div className={styles.mediaHeading}><label id={`${id}-label`} htmlFor={id}>{en ? "Photos and videos" : "Foto dan video"}</label><span>{items.length} / {EVIDENCE_FILE_LIMIT}</span></div>
     <div className={styles.mediaSurface}>
-      {preview && (file?.type.startsWith("video/") ? <video className={styles.preview} src={preview} controls playsInline preload="metadata" onLoadedMetadata={event => onMeasure(event.currentTarget.videoWidth, event.currentTarget.videoHeight)} /> :
-        // A local object URL previews the file before upload.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className={styles.preview} src={preview} alt={en ? "Evidence preview" : "Pratinjau bukti"} onLoad={event => onMeasure(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)} />)}
-      <div className={file ? styles.mediaActions : styles.emptyMedia}>
-        {file && <span className={styles.fileName} title={file.name}>{file.name}</span>}
+      {item && (failed.includes(item.id) ? <p className={styles.previewUnavailable}>{en ? "Preview unavailable on this device." : "Pratinjau belum tersedia pada perangkat ini."}</p>
+        : item.file.type.startsWith("video/") ? <video key={item.id} className={styles.preview} src={item.preview} controls playsInline preload="metadata" onError={() => setFailed(previous => [...previous,item.id])} onLoadedMetadata={event => onMeasure(item.id,event.currentTarget.videoWidth,event.currentTarget.videoHeight)} /> :
+        <img key={item.id} className={styles.preview} src={item.preview} alt={en ? "Evidence preview" : "Pratinjau bukti"} onError={() => setFailed(previous => [...previous,item.id])} onLoad={event => onMeasure(item.id,event.currentTarget.naturalWidth,event.currentTarget.naturalHeight)} />)}
+      {items.length > 1 && <div className={styles.mediaThumbnails} role="group" aria-label={en ? "Selected files" : "Berkas terpilih"}>{items.map((entry,index) => <button type="button" key={entry.id} disabled={disabled} aria-label={`${en ? "View file" : "Lihat berkas"} ${index+1}: ${entry.file.name}`} aria-pressed={entry.id === item?.id} onClick={() => setSelected(entry.id)}>
+        {entry.thumbnail ? <img src={entry.thumbnail} alt="" /> : <span>{entry.file.type.startsWith("video/") ? "Video" : en ? "Photo" : "Foto"} {index+1}</span>}
+      </button>)}</div>}
+      <div className={item ? styles.mediaActions : styles.emptyMedia}>
+        {item && <span className={styles.fileName} title={item.file.name}>{item.file.name}</span>}
         <label className={styles.fileTrigger}>
           <input ref={input} id={id} type="file" aria-labelledby={`${id}-label`} aria-describedby={`${id}-help`} className={styles.fileInput}
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" required={!file} disabled={disabled} onChange={event => onChange(event.target.files?.[0])} />
-          <MapIcon name="upload" /><span>{file ? (en ? "Replace" : "Ganti") : (en ? "Choose photo or video" : "Pilih foto atau video")}</span>
+            accept={EVIDENCE_ACCEPT} multiple required={!items.length} disabled={disabled || items.length >= EVIDENCE_FILE_LIMIT} onChange={event => { onChange(Array.from(event.target.files || [])); event.target.value = ""; }} />
+          <MapIcon name="upload" /><span>{item ? (en ? "Add media" : "Tambah media") : (en ? "Choose photos or videos" : "Pilih foto atau video")}</span>
         </label>
-        {file && <button type="button" className={styles.removeMedia} disabled={disabled} onClick={remove}>{en ? "Remove" : "Hapus"}</button>}
+        {item && <button type="button" className={styles.removeMedia} disabled={disabled} onClick={remove}>{en ? "Remove" : "Hapus"}</button>}
       </div>
     </div>
-    <small id={`${id}-help`}>{en ? "JPG, PNG, WebP, MP4 or WebM · Max. 10 MB" : "JPG, PNG, WebP, MP4 atau WebM · Maks. 10 MB"}</small>
+    <small id={`${id}-help`}>{en ? "Up to 5 files · 50 MB each · JPG, PNG, WebP, HEIC/HEIF, MP4, MOV, M4V, WebM" : "Maks. 5 berkas · 50 MB per berkas · JPG, PNG, WebP, HEIC/HEIF, MP4, MOV, M4V, WebM"}</small>
   </section>;
 }
+// --- end of Media field ---

@@ -1,4 +1,7 @@
-# Exercise paged rendering and two separate touch swipes with browser-only fixtures.
+# Todo:
+# -> check paged rendering, filters and two separate touch swipes
+
+# --- Forum pagination checks ---
 import asyncio,json
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
@@ -65,7 +68,7 @@ async def main():
         await page.get_by_role("searchbox",name="Cari pemulihan",exact=True).fill("Temuan terakhir unik");await expect(page.locator(CARDS)).to_have_count(1)
         await expect(page.locator(CARDS).first).to_have_attribute("aria-label","Catatan dari warga_90");assert requests==[1,2,3,4],requests
         await page.get_by_role("button",name="Hapus filter",exact=True).click();await expect(page.locator(CARDS)).to_have_count(25)
-        await page.get_by_role("combobox",name="Wilayah",exact=True).select_option("kalteng");await expect(page.locator(CARDS)).to_have_count(25)
+        await page.get_by_role("combobox",name="Cari wilayah",exact=True).fill("Kalimantan Tengah");await expect(page.locator(CARDS)).to_have_count(25)
         results["filter_finds_posts_after_50_and_resets_batch"]=True
         all_errors+=errors;await context.close()
         context,page,requests,errors=await fixture(browser,fail_page=2)
@@ -104,3 +107,4 @@ async def main():
     assert not all_errors,all_errors;results["page_errors"]=all_errors
     (OUT/"browser-results.json").write_text(json.dumps(results,indent=2));print(json.dumps(results,indent=2))
 if __name__=="__main__":asyncio.run(main())
+# --- end of Forum pagination checks ---

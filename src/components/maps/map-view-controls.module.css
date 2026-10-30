@@ -1,0 +1,56 @@
+/* Todo:
+   -> Keep weather choices, legends and native map controls compact and reachable.
+*/
+
+/* --- Map controls --- */
+.controls { position:absolute; z-index:450; bottom:32px; right:16px; width:300px; max-width:calc(100% - 24px); display:grid; gap:6px; font:12px var(--font-sans),sans-serif; color:var(--ink); pointer-events:none; }
+.controls button { cursor:pointer; font:inherit; color:inherit; min-height:44px; border:0; background:var(--surface-bg,#f6f1e6); }
+.controls button:disabled { opacity:.5; cursor:wait; }
+.controls button:focus-visible { outline:2px solid #2d5a43; outline-offset:2px; }
+.actions,.modes,.detail,.weatherPanel,.weatherLegend { pointer-events:auto; border:1px solid var(--surface-border,#d8cfbd); border-radius:7px; background:var(--surface-bg,#f6f1e6); box-shadow:0 2px 6px #17312414; }
+.actions { display:flex; justify-self:end; overflow:hidden; }
+.actions>button { display:flex; align-items:center; justify-content:center; gap:5px; padding:0 9px; flex:1; }
+.actions>button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
+.actions button[aria-expanded=true] { color:#116683; background:#e8f1ef; }
+.zoom { display:flex; border-right:1px solid var(--surface-border,#d8cfbd); }
+.zoom button { min-width:44px; font-size:20px; padding:0 7px; }
+.zoom button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
+.modes { display:flex; overflow:hidden; }
+.modes button { flex:1; padding:0 10px; white-space:nowrap; }
+.modes button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
+.modes button[aria-pressed=true],.weatherTabs button[aria-pressed=true] { color:white; background:#2d5a43; }
+.controls button:hover { filter:brightness(.96); }
+.weatherPanel,.detail { position:absolute; bottom:100%; right:0; width:100%; margin-bottom:8px; box-sizing:border-box; }
+.weatherPanel { padding:6px 12px 10px; }
+.panelHeading { display:flex; align-items:center; justify-content:space-between; }
+.panelHeading strong { font-size:13px; }
+.panelHeading button { display:grid; place-items:center; width:44px; background:transparent; margin-right:-8px; }
+.weatherTabs { display:flex; border:1px solid var(--surface-border,#d8cfbd); border-radius:5px; overflow:hidden; }
+.weatherTabs button { flex:1; padding:0 7px; }
+.weatherTabs button+button { border-left:1px solid var(--surface-border,#d8cfbd); }
+.subtypes { display:flex; gap:8px; padding-top:6px; }
+.subtypes button { flex:1; background:transparent; color:#5c6c61; }
+.subtypes button[aria-pressed=true] { color:#1b5e3c; box-shadow:inset 0 -2px #1b5e3c; font-weight:700; }
+.offButton { width:100%; text-align:left; margin-top:5px; background:transparent!important; color:#5c6c61!important; }
+.offButton[aria-pressed=true] { font-weight:700; }
+.weatherLegend { padding:9px 12px 7px; }
+.weatherLegend>div { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.weatherLegend strong { font-size:11px; }
+.weatherLegend span,.weatherLegend small { font-size:10px; }
+.weatherLegend>i { display:block; height:7px; border-radius:2px; margin:6px 0 4px; }
+.weatherLegend .scale { position:relative; display:block; height:12px; }
+.scale span { position:absolute; transform:translateX(-50%); }
+.scale span:first-child { transform:none; }
+.scale span:last-child { transform:translateX(-100%); }
+.weatherLegend small { display:block; color:#52645c; margin-top:4px; font-size:9px; }
+.detail { display:grid; gap:5px; padding:15px; line-height:1.6; }
+.detail strong { font-size:14px; padding-right:26px; }
+.detail span { font-size:11px; }
+.detail small { color:#52645c; font-size:10px; }
+.detail .close { position:absolute; top:4px; right:4px; width:44px; display:grid; place-items:center; background:transparent; }
+.error { display:flex; align-items:center; gap:8px; font-size:11px; border-top:1px solid var(--surface-border,#d8cfbd); }
+.error button { color:#1b5e3c; text-decoration:underline; white-space:nowrap; background:transparent; }
+.hint { font-size:9px; line-height:1.6; padding:3px 7px; border-radius:4px; background:#173124df; color:#fffdf6; text-align:center; }
+@media(max-width:700px) { .controls { right:12px; bottom:42px; width:286px; gap:5px; } .hint { display:none; } .weatherPanel,.detail { max-height:calc(100dvh - 300px); overflow:auto; } }
+@media(max-height:520px) { .hint { display:none; } .controls { bottom:30px; } .weatherPanel,.detail { max-height:calc(100dvh - 215px); overflow:auto; } }
+/* --- end of Map controls --- */

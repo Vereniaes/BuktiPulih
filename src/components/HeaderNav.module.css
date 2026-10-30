@@ -90,7 +90,14 @@
   .mobileReport svg { flex: 0 0 auto; }
   .header[data-active-tab="fire"] .mobileReport,
   .header[data-active-tab="recovery"] .mobileReport {
-    bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+    top:10px;
+    right:calc(70px + env(safe-area-inset-right, 0px));
+    bottom:auto;
+    min-height:44px;
+    padding:0 12px;
+    border-radius:7px;
+    box-shadow:none;
+    font-size:12px;
   }
   .menuPanel :global(.portal-tabs) {
     order: 0;
@@ -161,5 +168,11 @@
 
 @media (max-width:860px) {
   :global(body):has(:global(#hotspot-time-range)) .mobileReport { visibility:hidden; pointer-events:none; }
+}
+@media (max-width:360px) {
+  .header[data-active-tab="fire"] .mobileReport span,
+  .header[data-active-tab="recovery"] .mobileReport span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  .header[data-active-tab="fire"] .mobileReport,
+  .header[data-active-tab="recovery"] .mobileReport { width:44px; padding:0; }
 }
 /* --- end of Header styles --- */

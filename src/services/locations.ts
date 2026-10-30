@@ -1,4 +1,8 @@
-// Resolve Google suggestions and map points into the existing editable report fields.
+// Todo:
+// -> Resolve Google suggestions and selected map points.
+// -> Share address components with report forms and hotspot labels.
+
+// --- Google place lookup ---
 import { googleLibrary } from "@/lib/google-maps";
 import type { LocationMatch, LocationSuggestion } from "@/types/location";
 type AddressPart = { types: string[]; longText?: string | null; shortText?: string | null; long_name?: string; short_name?: string };
@@ -35,13 +39,19 @@ export function createLocationSearch() {
     return { items };
   };
 }
-export async function reverseLocation(point: [number, number], signal: AbortSignal, language: "id" | "en") {
+/** Purpose: Read a selected point's address. Input: Coordinates, cancellation and language. Output: Address components. */
+export async function reverseAddress(point: [number, number], signal: AbortSignal, language: "id" | "en") {
   const { Geocoder } = await googleLibrary("geocoding") as google.maps.GeocodingLibrary;
   signal.throwIfAborted();
   const response = await new Geocoder().geocode({ location: { lng: point[0], lat: point[1] }, language, region: "id", fulfillOnZeroResults: true });
   signal.throwIfAborted();
-  const result = response.results[0];
+  return response.results;
+}
+export async function reverseLocation(point: [number, number], signal: AbortSignal, language: "id" | "en") {
+  const results = await reverseAddress(point, signal, language);
+  const result = results[0];
   if (!result) return { items: [] as LocationMatch[] };
   const area = administration(result.address_components);
   return { items: [{ id: result.place_id, name: result.formatted_address, label: result.formatted_address, ...area, coordinates: point }] };
 }
+// --- end of Google place lookup ---

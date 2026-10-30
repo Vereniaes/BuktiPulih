@@ -1,15 +1,20 @@
-// Draw bounded wind trails from the model samples.
-import L from "leaflet";
+// Todo:
+// -> Animate model wind on either map renderer.
+// -> Pause work during camera movement and hidden tabs.
+"use client";
+import { useEffect, useRef } from "react";
+import type { ExplorerMapApi } from "@/types/explorer-map";
+// --- Wind canvas ---
 import type { WindPoint } from "@/services/api";
-import { interpolateWind, pixelsPerMeter, windBounds, windColor, type WindSample } from "./wind-field";
+import { interpolateWind, pixelsPerMeter, windBounds, windColor, type WindSample } from "../hazards/wind-field";
 
-export { windColor, windVector } from "./wind-field";
+export { windColor, windVector } from "../hazards/wind-field";
 
 type Particle={x:number;y:number;px:number;py:number};
 const GRID_STEP=24, MAX_DELTA=100, FRAME_MS=1000/30;
 
-export class WindLayer extends L.Layer {
-  private map!:L.Map;
+class WindCanvas {
+  private map:ExplorerMapApi;
   private canvas!:HTMLCanvasElement;
   private context!:CanvasRenderingContext2D;
   private points:WindPoint[];
@@ -30,33 +35,29 @@ export class WindLayer extends L.Layer {
   private pixelScale=10;
   private bounds:ReturnType<typeof windBounds>;
   private motionQuery:MediaQueryList|null=null;
-  private readonly onMotionStart=()=>this.stop();
-  private readonly onMotionEnd=()=>this.rebuild();
+  private cleanupMap=()=>{};
+  private timer=0;
+  private viewKey="";
+  private readonly onCamera=()=>{
+    const key=JSON.stringify([this.map.getView(),this.map.getSize()]);if(key===this.viewKey)return;
+    this.viewKey=key;this.stop();this.context.clearRect(0,0,this.width,this.height);clearTimeout(this.timer);this.timer=window.setTimeout(()=>this.rebuild(),100);
+  };
   private readonly onVisibility=()=>document.hidden?this.stop():this.rebuild();
   private readonly onMotionPreference=()=>{this.reduced=this.motionQuery?.matches??false;if(this.reduced)this.stop();else this.rebuild();};
 
-  constructor(points:WindPoint[],opacity:number) {
-    super();this.points=points;this.opacity=Math.max(0,Math.min(1,opacity));this.bounds=windBounds(points);
-  }
-
-  onAdd(map:L.Map):this {
-    this.map=map;this.canvas=L.DomUtil.create("canvas","leaflet-wind-animation") as HTMLCanvasElement;
-    Object.assign(this.canvas.style,{position:"absolute",left:"0",top:"0",pointerEvents:"none",opacity:String(this.opacity)});
-    const context=this.canvas.getContext("2d");if(!context)throw new Error("Wind canvas is unavailable");this.context=context;
-    (map.getPane("wind")??map.getPanes().overlayPane).appendChild(this.canvas);
+  constructor(map:ExplorerMapApi,canvas:HTMLCanvasElement,points:WindPoint[],opacity:number) {
+    this.map=map;this.canvas=canvas;this.points=points;this.opacity=Math.max(0,Math.min(1,opacity));this.bounds=windBounds(points);
+    const context=canvas.getContext("2d");if(!context)throw new Error("Wind canvas unavailable");this.context=context;
+    this.canvas.style.opacity=String(this.opacity);
     this.motionQuery=window.matchMedia("(prefers-reduced-motion: reduce)");this.reduced=this.motionQuery.matches;
     this.motionQuery.addEventListener("change",this.onMotionPreference);
-    map.on("movestart zoomstart",this.onMotionStart);map.on("moveend",this.onMotionEnd);map.on("resize",this.onMotionEnd);
-    document.addEventListener("visibilitychange",this.onVisibility);
-    this.rebuild();return this;
+    this.cleanupMap=map.subscribe(this.onCamera);document.addEventListener("visibilitychange",this.onVisibility);
+    this.rebuild();
   }
-
-  onRemove(map:L.Map):this {
-    this.stop();map.off("movestart zoomstart",this.onMotionStart);map.off("moveend",this.onMotionEnd);map.off("resize",this.onMotionEnd);
-    document.removeEventListener("visibilitychange",this.onVisibility);this.motionQuery?.removeEventListener("change",this.onMotionPreference);
-    this.motionQuery=null;this.canvas.remove();this.grid=[];this.cells=[];this.particles=[];return this;
+  remove() {
+    this.stop();clearTimeout(this.timer);this.cleanupMap();document.removeEventListener("visibilitychange",this.onVisibility);
+    this.motionQuery?.removeEventListener("change",this.onMotionPreference);this.grid=[];this.cells=[];this.particles=[];
   }
-
   setOpacity(opacity:number):this {
     this.opacity=Math.max(0,Math.min(1,opacity));if(this.canvas)this.canvas.style.opacity=String(this.opacity);return this;
   }
@@ -66,23 +67,24 @@ export class WindLayer extends L.Layer {
   }
 
   private resize() {
-    const size=this.map.getSize();this.width=size.x;this.height=size.y;this.dpr=Math.min(window.devicePixelRatio||1,1.5);
+    const size=this.map.getSize();this.width=size.width;this.height=size.height;this.dpr=Math.min(window.devicePixelRatio||1,1.5);
     this.canvas.width=Math.round(this.width*this.dpr);this.canvas.height=Math.round(this.height*this.dpr);
     this.canvas.style.width=`${this.width}px`;this.canvas.style.height=`${this.height}px`;
-    L.DomUtil.setPosition(this.canvas,this.map.containerPointToLayerPoint([0,0]));
     this.context.setTransform(this.dpr,0,0,this.dpr,0,0);
   }
 
   private rebuild() {
     if(!this.map||!this.canvas||document.hidden)return;
     this.paused=true;if(this.frame)cancelAnimationFrame(this.frame);this.frame=0;
-    this.resize();this.pixelScale=Math.min(14,Math.max(7,pixelsPerMeter(this.map.getZoom(),this.map.getCenter().lat)*90000));this.context.clearRect(0,0,this.width,this.height);
+    this.resize();this.pixelScale=Math.min(14,Math.max(7,pixelsPerMeter(this.map.getView().zoom,this.map.getView().center[1])*90000));this.context.clearRect(0,0,this.width,this.height);
     if(!this.bounds||this.width===0||this.height===0){this.grid=[];this.cells=[];this.particles=[];return;}
     this.columns=Math.ceil(this.width/GRID_STEP)+1;this.rows=Math.ceil(this.height/GRID_STEP)+1;
     this.grid=new Array(this.columns*this.rows);
     for(let gy=0;gy<this.rows;gy++)for(let gx=0;gx<this.columns;gx++) {
-      const latlng=this.map.containerPointToLatLng([gx*GRID_STEP,gy*GRID_STEP]);
-      this.grid[gy*this.columns+gx]=interpolateWind(this.points,latlng.lat,latlng.lng);
+      const point=this.map.unproject({x:gx*GRID_STEP,y:gy*GRID_STEP});
+      const sample=interpolateWind(this.points,point[1],point[0]);
+      const bearing=this.map.getView().bearing*Math.PI/180;
+      this.grid[gy*this.columns+gx]=sample?{...sample,u:sample.u*Math.cos(bearing)-sample.v*Math.sin(bearing),v:sample.u*Math.sin(bearing)+sample.v*Math.cos(bearing)}:null;
     }
     const coarse=window.matchMedia("(pointer: coarse)").matches,count=coarse?180:400;
     this.cells=this.validCells();this.particles=[];
@@ -139,3 +141,11 @@ export class WindLayer extends L.Layer {
     const cell=this.cells[Math.floor(Math.random()*this.cells.length)];particle.x=(cell.x+Math.random())*GRID_STEP;particle.y=(cell.y+Math.random())*GRID_STEP;particle.px=particle.x;particle.py=particle.y;
   }
 }
+
+/** Paint wind only while the active camera is still. Input: model samples. Output: bounded display trails. */
+export function MapWindLayer({api,points,opacity}:{api:ExplorerMapApi|null;points:WindPoint[];opacity:number}) {
+  const canvas=useRef<HTMLCanvasElement>(null);
+  useEffect(()=>{if(!api||!canvas.current)return;const layer=new WindCanvas(api,canvas.current,points,opacity);return()=>layer.remove();},[api,points,opacity]);
+  return <canvas ref={canvas} aria-hidden="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:1}}/>;
+}
+// --- end of Wind canvas ---

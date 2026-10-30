@@ -11,6 +11,23 @@ export interface CompressionResult {
   reductionPercentage: number;
 }
 
+/** Input: a photo and size limits. Output: a resized WebP blob without a base64 copy. */
+export async function resizeImageBlob(file: File, maxWidth = 1600, quality = .82, maxHeight = 1600) {
+  const url = URL.createObjectURL(file), image = new Image(), canvas = document.createElement("canvas");
+  try {
+    image.src = url; await image.decode();
+    const scale = Math.min(1,maxWidth/image.naturalWidth,maxHeight/image.naturalHeight);
+    const width = Math.max(1,Math.round(image.naturalWidth*scale)), height = Math.max(1,Math.round(image.naturalHeight*scale));
+    canvas.width = width; canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Gagal menyiapkan foto.");
+    context.drawImage(image,0,0,width,height);
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve,"image/webp",quality));
+    if (!blob) throw new Error("Gagal menyiapkan foto.");
+    return {blob,width,height};
+  } finally { image.removeAttribute("src"); URL.revokeObjectURL(url); canvas.width = 1; canvas.height = 1; }
+}
+
 export const compressImageClient = (
   file: File,
   maxWidth = 1280,

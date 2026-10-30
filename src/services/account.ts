@@ -1,10 +1,15 @@
-// Save the signed-in profile and read its own posts and comments.
+// Todo:
+// -> read account activity and save authenticated contributions
+// -> upload avatars and evidence through their own storage paths
+
+// --- Account API ---
 import type { CommentPage, CommentSort, CommentVote, DiscussionComment } from "@/types/discussion";
 import type { AccountUser, ActivityKind, ActivityPage, ProfileUpdate } from "@/types/account";
 import type { ForumPost, EvidenceSubmission, RecoveryReport } from "@/types";
 import { FORUM_PAGE_SIZE } from "@/utils/forumDisplay";
-import { compressImageClient } from "@/utils/imageCompression";
-import { ApiError, requestApi } from "./http";
+import { compressImageClient, resizeImageBlob } from "@/utils/imageCompression";
+import { EVIDENCE_TYPES, inspectEvidenceFile } from "@/utils/evidenceMedia";
+import { ApiError, getApiSessionContext, requestApi } from "./http";
 export { ApiError } from "./http";
 export async function getCurrentUserApi(): Promise<AccountUser> {
   const result = await requestApi<{ user: AccountUser }>("/auth/me");
@@ -58,7 +63,6 @@ export async function uploadAvatarApi(file: File): Promise<string> {
 }
 async function uploadFileApi(file: File, purpose: "avatar" | "evidence", signal?: AbortSignal): Promise<string> {
   const form = new FormData(); form.set("file", file); form.set("purpose", purpose);
-  const { getApiSessionContext } = await import("./http");
   const context = getApiSessionContext();
   const response = await fetch("/api/upload", { method: "POST", body: form, signal, headers: context ? { "X-Session-Context": context } : {} });
   const result = await response.json().catch(() => null);
@@ -67,12 +71,26 @@ async function uploadFileApi(file: File, purpose: "avatar" | "evidence", signal?
   if (!response.ok || !result?.url) throw new Error(result?.error || "Berkas belum dapat diunggah. Coba lagi.");
   return result.url;
 }
-export async function uploadEvidenceApi(file: File, signal?: AbortSignal) {
-  if (file.type.startsWith("image/")) {
-    const image = await compressImageClient(file, 1600, 0.82, 1600);
-    const blob = await (await fetch(image.dataUrl)).blob();
-    file = new File([blob], "evidence.webp", { type: "image/webp" });
+export async function uploadEvidenceApi(file: File, signal?: AbortSignal, onProgress?: (percentage: number) => void) {
+  const contentType = await inspectEvidenceFile(file);
+  if (file.type !== contentType) file = new File([file],file.name,{type:contentType,lastModified:file.lastModified});
+  if (contentType.startsWith("image/")) {
+    try {
+      const { blob } = await resizeImageBlob(file);
+      file = new File([blob], "evidence.webp", { type: "image/webp" });
+    } catch (error) {
+      if (!["image/heic","image/heif"].includes(contentType)) throw error;
+    }
   }
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  return uploadFileApi(file, "evidence", signal);
+  const { upload } = await import("@vercel/blob/client");
+  const session = getApiSessionContext();
+  if (!session) throw new Error("Silakan masuk kembali.");
+  const blob = await upload(`bukti-lapangan/${crypto.randomUUID()}.${EVIDENCE_TYPES[file.type]}`,file,{
+    access:"public",handleUploadUrl:"/api/evidence/upload",contentType:file.type,multipart:file.size>=5*1024*1024,abortSignal:signal,
+    headers:{"X-Session-Context":session},clientPayload:JSON.stringify({size:file.size,contentType:file.type}),
+    onUploadProgress: progress => onProgress?.(progress.percentage),
+  });
+  return blob.url;
 }
+// --- end of Account API ---

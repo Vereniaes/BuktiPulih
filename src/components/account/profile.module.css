@@ -1,3 +1,8 @@
+/* Todo:
+-> style profile fields, account actions and activity history
+*/
+
+/* --- Profile styles --- */
 .formSection,
 .historySection {
   min-width: 0;
@@ -233,12 +238,11 @@
 .pagination > div { display: flex; gap: 8px; }
 .pageButton {
   display: inline-flex;
-  min-width: 44px;
+  width: 44px;
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 10px;
+  padding: 0;
   border: 1px solid var(--surface-border);
   border-radius: 7px;
   color: var(--ink);
@@ -310,8 +314,6 @@
   .formMessage:not(:empty) { flex-basis: 100%; }
   .pagination { align-items: flex-start; flex-direction: column; }
   .pagination > div { width: auto; justify-content: flex-start; }
-  .pagination .pageButton { flex: 0 0 44px; padding: 0; }
-  .pageLabel { display: none; }
 }
 
 @media (max-width: 760px) {
@@ -358,3 +360,4 @@
 }
 
 .unverifiedBadge { display:inline-flex; width:fit-content; margin-top:5px; padding:3px 7px; color:#704d12; background:#f6edcf; border:1px solid #e6d49a; border-radius:4px; font-size:11px; font-weight:700; }
+/* --- end of Profile styles --- */

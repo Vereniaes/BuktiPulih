@@ -82,12 +82,12 @@ export interface TimelineItem {
 
 export interface BnpbProvinceItem {
   provinsi: string;
-  tgl_update: string;
+  tgl_update: string | null;
   today_luas_terbakar_ha: number;
   total_hotspot: number;
-  relawan_lapangan: number;
-  kualitas_udara_pm25: string;
-  buktipulih_coverage: {
+  relawan_lapangan: number | null;
+  kualitas_udara_pm25: string | null;
+  buktipulih_coverage?: {
     active_plots: number;
     restored_area_ha: number;
     alive_trees: number;
@@ -103,7 +103,12 @@ export interface BnpbProvinceItem {
 export interface BnpbSyncData {
   source: string;
   layer: string;
-  sync_timestamp: string;
+  sync_timestamp: string | null;
+  fetched_at?: string | null;
+  checked_at?: string | null;
+  status?: "ready" | "cached" | "unavailable";
+  sync_status?: "SYNCHRONIZED" | "CACHED" | "UNAVAILABLE";
+  total_volunteers_national?: number | null;
   provinces: BnpbProvinceItem[];
 }
 
@@ -144,11 +149,18 @@ export interface ComparativeMedia {
   after_label: string;
 }
 
+export interface PostMedia {
+  type: "image" | "video";
+  url: string;
+  aspect_ratio: "square" | "portrait" | "landscape";
+  thumbnail_url?: string;
+}
+
 export interface ForumPost {
   persisted?: boolean;
   location?: { type: "Point"; coordinates: [number, number] };
-  ecosystem_type?: EcosystemType;
-  condition?: TreeStatus;
+  ecosystem_type?: string;
+  condition?: string;
   verification_status?: "unverified";
   is_anonymous?: boolean;
   id: string;
@@ -164,12 +176,8 @@ export interface ForumPost {
   status_condition?: string;
   water_table_depth_cm?: number; // indikator tinggi muka air tanah gambut (tmat) terukur
   water_table_status?: "aman" | "waspada" | "kritis bahaya";
-  media: {
-    type: "image" | "video";
-    url: string;
-    aspect_ratio: "square" | "portrait" | "landscape";
-    thumbnail_url?: string;
-  };
+  media: PostMedia;
+  media_items?: PostMedia[];
   comparative_media?: ComparativeMedia;
   kader_badge?: {
     cert_id: string;
@@ -222,9 +230,9 @@ export interface LiveWeatherData {
 
 export interface RecoveryReport extends ForumPost {
   location: { type: "Point"; coordinates: [number, number] };
-  ecosystem_type: EcosystemType;
-  condition: TreeStatus;
+  ecosystem_type: string;
+  condition: string;
   verification_status: "unverified";
 }
-export type EvidenceSubmission = Pick<RecoveryReport, "location_name" | "region_key" | "caption" | "media" | "location" | "ecosystem_type" | "condition" | "province" | "city" | "place_detail"> & { submission_id: string; is_anonymous: boolean };
+export type EvidenceSubmission = Pick<RecoveryReport, "location_name" | "region_key" | "caption" | "media" | "media_items" | "location" | "ecosystem_type" | "condition" | "province" | "city" | "place_detail"> & { submission_id: string; is_anonymous: boolean };
 // --- end of Shared types ---

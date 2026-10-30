@@ -1,5 +1,9 @@
-// Read separate server-paginated histories for the current account.
+// Todo:
+// -> show private posting and comment history
+// -> navigate pages with accessible arrow controls
 "use client";
+
+// --- Activity history ---
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { getAccountActivityApi } from "@/services/account";
@@ -47,9 +51,10 @@ export function ActivityHistory({ userId, language, kind, page, onNavigate }: Pr
             <td><Link className={styles.openLink} href={`/forum/${encodeURIComponent(item.post_id)}${kind === "comments" ? "#comments-section" : ""}`}>{t.open}<span aria-hidden="true"> ↗</span></Link></td></tr>)}</tbody>
         </table>}
       {data && !unavailable && data.pagination.total_items > 0 && <nav className={styles.pagination} aria-label={t.title}><span>{t.page} {data.pagination.page} {t.of} {data.pagination.total_pages}</span><div>
-        <button type="button" className={styles.pageButton} aria-label={t.previous} disabled={page <= 1} onClick={() => onNavigate(kind, page - 1)}><span aria-hidden="true">←</span><span className={styles.pageLabel}>{t.previous}</span></button>
-        <button type="button" className={styles.pageButton} aria-label={t.next} disabled={page >= data.pagination.total_pages} onClick={() => onNavigate(kind, page + 1)}><span className={styles.pageLabel}>{t.next}</span><span aria-hidden="true">→</span></button>
+        <button type="button" className={styles.pageButton} aria-label={t.previous} disabled={page <= 1} onClick={() => onNavigate(kind, page - 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7" /></svg></button>
+        <button type="button" className={styles.pageButton} aria-label={t.next} disabled={page >= data.pagination.total_pages} onClick={() => onNavigate(kind, page + 1)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" /></svg></button>
       </div></nav>}
     </div>
   </section>;
 }
+// --- end of Activity history ---

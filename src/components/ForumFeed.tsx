@@ -1,12 +1,14 @@
-// Show and filter resident field notes.
+// Todo:
+// -> search, filter and paginate resident field notes
 "use client";
 
+// --- Forum feed ---
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ForumPost } from "@/types";
 import { initialForumPosts } from "@/data/forumPostsData";
-import { FORUM_PAGE_SIZE, getSortedPosts, type SortCriteria } from "@/utils/forumDisplay";
-import { REGION_TABS } from "@/utils/plotDisplay";
+import { FORUM_PAGE_SIZE, getForumRegions, getSortedPosts, type SortCriteria } from "@/utils/forumDisplay";
 import { ForumPostCard } from "./forum/ForumPostCard";
+import { ForumRegionFilter } from "./forum/ForumRegionFilter";
 import { useDoubleSwipe } from "./forum/useDoubleSwipe";
 import type { useForumPosts } from "./forum/useForumPosts";
 import { useMasonry } from "./forum/useMasonry";
@@ -37,8 +39,6 @@ export const ForumFeed: React.FC<ForumFeedProps> = ({
     title: "Ruang Suara Hijau",
     search: "Cari pemulihan",
     searchLabel: "Cari pemulihan",
-    all: "Semua wilayah",
-    region: "Wilayah",
     latest: "Terbaru",
     likes: "Disukai",
     comments: "Komentar",
@@ -51,8 +51,6 @@ export const ForumFeed: React.FC<ForumFeedProps> = ({
     title: "Green Voices",
     search: "Search restoration",
     searchLabel: "Search restoration",
-    all: "All regions",
-    region: "Region",
     latest: "Latest",
     likes: "Most liked",
     comments: "Comments",
@@ -67,9 +65,7 @@ export const ForumFeed: React.FC<ForumFeedProps> = ({
     onSelectRegionFilter?.(value);
   };
   const displayPosts = useMemo(() => getSortedPosts(posts, region, currentSort, query), [posts, region, currentSort, query]);
-  const regionCounts = useMemo(() => Object.fromEntries(
-    REGION_TABS.map((tab) => [tab.key, tab.key === "all" ? posts.length : getSortedPosts(posts, tab.key, "latest").length]),
-  ), [posts]);
+  const regions = useMemo(() => getForumRegions(posts), [posts]);
   const hasFilters = region !== "all" || Boolean(query.trim());
   const clearFilters = () => { changeRegion("all"); setQuery(""); };
 
@@ -86,15 +82,7 @@ export const ForumFeed: React.FC<ForumFeedProps> = ({
           <input className={styles.input} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
             placeholder={copy.search} aria-label={copy.searchLabel} />
         </label>
-        <label>
-          <span className={styles.visuallyHidden}>{copy.region}</span>
-          <select className={styles.select} value={region} onChange={(event) => changeRegion(event.target.value)} aria-label={copy.region}>
-            <option value="all">{copy.all} ({regionCounts.all})</option>
-            {REGION_TABS.filter((tab) => tab.key !== "all").map((tab) => (
-              <option key={tab.key} value={tab.key} title={tab.label}>{tab.label.split(" (")[0]} ({regionCounts[tab.key] ?? 0})</option>
-            ))}
-          </select>
-        </label>
+        <ForumRegionFilter value={region} regions={regions} onChange={changeRegion} language={language} />
         <label>
           <span className={styles.visuallyHidden}>{copy.sort}</span>
           <select className={styles.select} value={currentSort} onChange={(event) => setCurrentSort(event.target.value as SortCriteria)} aria-label={copy.sort}>
@@ -166,3 +154,4 @@ function PagedPosts({ posts, source, complete, language, onOpenPostDetail, onTog
     <span className={styles.visuallyHidden} role="status">{visible.length} {language === "id" ? "posting ditampilkan" : "posts shown"}</span>
   </>;
 }
+// --- end of Forum feed ---

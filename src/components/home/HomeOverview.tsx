@@ -11,6 +11,9 @@ import type { BnpbSyncData, ForumPost, PlotFeatureCollection } from "@/types";
 import type { DataResult } from "@/types/environment";
 import { getSortedPosts } from "@/utils/forumDisplay";
 import { initialForumPosts } from "@/data/forumPostsData";
+import { matchRegion } from "@/utils/plotDisplay";
+import { bnpbSourceDate, bnpbStatus } from "@/utils/bnpbFreshness";
+import { formatTimeWib } from "@/utils/hourlyForecast";
 import { HomeIdentityHero } from "./HomeIdentityHero";
 import { HomeActionButton, HomeStoryLabel } from "./HomeActionButton";
 import { HomeEvidenceMedia } from "./HomeEvidenceMedia";
@@ -36,8 +39,23 @@ const publishedIds = new Set(initialForumPosts.map(post => post.id));
 
 export function HomeOverview(props: Props) {
   const reducedMotion = useReducedMotion();
-  const fieldUpdates = useMemo(() => getSortedPosts(props.posts, props.region, "latest").slice(0, 4), [props.posts, props.region]);
+  const regionalPosts = useMemo(() => getSortedPosts(props.posts, props.region, "latest"), [props.posts, props.region]);
+  const fieldUpdates = regionalPosts.slice(0, 4);
   const dateFormat = new Intl.DateTimeFormat(props.language === "en" ? "en-GB" : "id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
+  const en = props.language === "en";
+  const numberFormat = new Intl.NumberFormat(en ? "en-GB" : "id-ID", { maximumFractionDigits: 2 });
+  const provinces = props.bnpb.data.provinces.filter(province => matchRegion(province.provinsi, props.region));
+  const bnpbState = bnpbStatus(props.bnpb.data);
+  const hasBnpb = props.bnpb.origin === "service" && bnpbState !== "unavailable" && provinces.length > 0;
+  const dates = provinces.map(province => bnpbSourceDate(province.tgl_update)).filter((date): date is string => date !== null).sort();
+  const sourceDate = dates.length === provinces.length && dates.length
+    ? `${dateFormat.format(new Date(dates[0]))}${dates[0] !== dates.at(-1) ? ` - ${dateFormat.format(new Date(dates.at(-1)!))}` : ""}`
+    : en ? "Source date unavailable" : "Tanggal sumber belum tersedia";
+  const bnpbMeta = hasBnpb ? `BNPB · ${sourceDate} · ${provinces.length} ${en ? "provinces" : "provinsi"}${bnpbState === "cached" ? en ? " · Cached" : " · Tersimpan" : ""}`
+    : en ? "BNPB data unavailable" : "Data BNPB belum tersedia";
+  const plots = props.plots.data.features.filter(plot => matchRegion(plot.properties.region, props.region));
+  const plotDates = plots.map(plot => plot.properties.last_monitored_at).filter(date => Number.isFinite(Date.parse(date))).sort();
+  const visiblePosts = regionalPosts.filter(post => post.persisted);
   const reveal = { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.15 } };
   const revealTransition = { duration: reducedMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] as const };
 
@@ -164,7 +182,7 @@ export function HomeOverview(props: Props) {
                 </svg>
               </span>
               <span className={styles.situationValueWrap}>
-                <span className={styles.situationValue}>780,05</span>
+                <span className={styles.situationValue}>{hasBnpb ? numberFormat.format(provinces.reduce((sum, province) => sum + province.today_luas_terbakar_ha, 0)) : "—"}</span>
                 <span className={styles.situationUnit}>ha</span>
               </span>
             </span>
@@ -172,9 +190,7 @@ export function HomeOverview(props: Props) {
               {props.language === "en" ? "Recorded burned area" : "Luas karhutla tercatat"}
             </span>
             <span className={styles.situationCardSub}>
-              {props.language === "en"
-                ? "Last update · 26 Sep 2026 · 6 provinces"
-                : "Pembaruan terakhir · 26 Sep 2026 · 6 provinsi"}
+              {bnpbMeta}
             </span>
           </HomeActionButton>
 
@@ -191,14 +207,16 @@ export function HomeOverview(props: Props) {
                 </svg>
               </span>
               <span className={styles.situationValueWrap}>
-                <span className={styles.situationValue}>1.243</span>
+                <span className={styles.situationValue}>{hasBnpb ? numberFormat.format(provinces.reduce((sum, province) => sum + province.total_hotspot, 0)) : "—"}</span>
               </span>
             </span>
             <span className={styles.situationCardLabel}>
-              {props.language === "en" ? "Hotspots detected" : "Titik panas terpantau"}
+              {en ? "BNPB recorded hotspots" : "Titik panas tercatat BNPB"}
             </span>
             <span className={styles.situationCardSub}>
-              {props.language === "en" ? "Within last 24 hours · (Sample data)" : "Dalam 24 jam terakhir · (Data contoh)"}
+              {bnpbMeta}
+              {hasBnpb && props.bnpb.data.fetched_at && <><br />{en ? "Retrieved" : "Diambil"} · {formatTimeWib(props.bnpb.data.fetched_at)}</>}
+              {hasBnpb && props.bnpb.data.checked_at && <><br />{en ? "Last checked" : "Diperiksa"} · {formatTimeWib(props.bnpb.data.checked_at)}</>}
             </span>
           </HomeActionButton>
 
@@ -212,7 +230,7 @@ export function HomeOverview(props: Props) {
                 </svg>
               </span>
               <span className={styles.situationValueWrap}>
-                <span className={styles.situationValue}>9</span>
+                <span className={styles.situationValue}>{props.plots.origin === "service" ? numberFormat.format(plots.length) : "—"}</span>
                 <span className={styles.situationUnit}>{props.language === "en" ? "plots" : "petak"}</span>
               </span>
             </span>
@@ -220,9 +238,9 @@ export function HomeOverview(props: Props) {
               {props.language === "en" ? "Recovery area monitored" : "Area pemulihan dipantau"}
             </span>
             <span className={styles.situationCardSub}>
-              {props.language === "en"
-                ? "Last physical audit · 13 Oct 2026 · 2 plots need attention"
-                : "Pemeriksaan terakhir · 13 Okt 2026 · 2 petak perlu perhatian"}
+              {props.plots.origin !== "service" ? en ? "Plot data unavailable" : "Data petak belum tersedia" : plotDates.length
+                ? `${en ? "Latest field observation" : "Pengamatan lapangan terakhir"} · ${dateFormat.format(new Date(plotDates.at(-1)!))}`
+                : en ? "Field observation date unavailable" : "Tanggal pengamatan belum tersedia"}
             </span>
           </HomeActionButton>
 
@@ -239,17 +257,15 @@ export function HomeOverview(props: Props) {
                 </svg>
               </span>
               <span className={styles.situationValueWrap}>
-                <span className={styles.situationValue}>27</span>
+                <span className={styles.situationValue}>{numberFormat.format(visiblePosts.length)}</span>
                 <span className={styles.situationUnit}>{props.language === "en" ? "reports" : "laporan"}</span>
               </span>
             </span>
             <span className={styles.situationCardLabel}>
-              {props.language === "en" ? "Citizen evidence received" : "Bukti warga masuk"}
+              {en ? "Citizen evidence shown" : "Bukti warga ditampilkan"}
             </span>
             <span className={styles.situationCardSub}>
-              {props.language === "en"
-                ? "14 verified · 8 under review · 5 unverified"
-                : "14 diverifikasi · 8 sedang ditinjau · 5 belum diperiksa"}
+              {en ? "From loaded field posts" : "Dari posting lapangan yang dimuat"}
             </span>
           </HomeActionButton>
         </div>
