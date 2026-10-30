@@ -1,17 +1,14 @@
 // Todo:
-// -> Show the forest image, mission, and primary actions.
+// -> Show the approved seedling intro, mission and homepage actions.
 
-// --- Homepage intro ---
+// --- Seedling hero ---
 "use client";
-import { useRef } from "react";
-import { useReducedMotion, useScroll, useSpring, useTransform, type Variants } from "motion/react";
-import * as m from "motion/react-m";
-import { HomeActionButton } from "./HomeActionButton";
 
-const entrance: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
-};
+import { useLayoutEffect, useRef } from "react";
+import Image from "next/image";
+import { HomeActionButton } from "./HomeActionButton";
+import { attachSeedlingIntro } from "./seedlingIntro";
+import styles from "./home-preview.module.css";
 
 interface Props {
   onOpenRecovery: () => void;
@@ -21,77 +18,55 @@ interface Props {
 }
 
 export function HomeIdentityHero({ onOpenRecovery, onOpenForum, onOpenReport, language = "id" }: Props) {
-  const isEn = language === "en";
-  const heroRef = useRef<HTMLElement>(null);
-  const reducedMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const progress = useSpring(scrollYProgress, { stiffness: 80, damping: 30 });
-  const photoY = useTransform(progress, [0, 1], ["-4%", "4%"]);
+  const root = useRef<HTMLElement>(null);
+  const en = language === "en";
+  useLayoutEffect(() => {
+    if (root.current) return attachSeedlingIntro(root.current);
+  }, [language]);
+
+  function explore() {
+    const target = document.getElementById("about-title")?.closest("section");
+    if (!target) return;
+    const header = document.querySelector("header.portal-header")?.getBoundingClientRect().height ?? 73;
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - header - 16, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }
 
   return (
-    <section ref={heroRef} className="home-identity-hero" aria-label="Identitas BuktiPulih">
-      <div className="home-hero-card">
-        <m.div
-          className="home-hero-content"
-          initial="hidden"
-          animate="visible"
-          transition={{ staggerChildren: reducedMotion ? 0 : 0.12 }}
-        >
-          <m.p className="home-hero-kicker" variants={entrance}>
-            {isEn ? "TRACE THE TRACKS, SAFEGUARD RESTORATION" : "KARHUTLA DAN PEMULIHAN, DIPANTAU BERSAMA"}
-          </m.p>
-
-          <m.h1 className="home-hero-title" variants={entrance}>
-            {isEn ? (
-              <>
-                Seeing <span className="hero-highlight-green">forests recover</span>,<br />
-                through data and <br />
-                <span className="hero-highlight-orange">human voices</span>.
-              </>
-            ) : (
-              <>
-                Melihat <span className="hero-highlight-green">hutan pulih</span>,<br />
-                lewat data dan <br />
-                <span className="hero-highlight-orange">suara manusia</span>.
-              </>
-            )}
-          </m.h1>
-
-          <m.div className="home-hero-actions" variants={entrance}>
-            <HomeActionButton language={language} type="button" className="home-hero-btn-primary" onClick={onOpenRecovery}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-              </svg>
-              <span>{isEn ? "View restoration map" : "Lihat peta pemulihan"}</span>
-            </HomeActionButton>
-
-            <HomeActionButton language={language} type="button" className="home-hero-btn-secondary" onClick={onOpenReport || onOpenForum}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-              <span>{isEn ? "Submit field evidence" : "Kirim bukti dari lapangan"}</span>
-            </HomeActionButton>
-          </m.div>
-        </m.div>
+    <section ref={root} className={styles.hero} data-home-hero data-phase="pending" data-opening="true" aria-labelledby="home-mission-title">
+      <div className={styles.media} data-scene aria-hidden="true">
+        <Image data-still className={styles.still} src="/home/seedling-final.jpg" width={1280} height={720} alt="" fetchPriority="high" loading="eager" unoptimized />
+        <video data-video className={styles.video} poster="/home/seedling-first.jpg" width="1280" height="720" muted playsInline preload="none" disablePictureInPicture />
       </div>
-      <div className="home-hero-visual" aria-hidden="true">
-        <m.img
-          initial={{ scale: 1.16 }}
-          animate={{ scale: reducedMotion ? 1 : 1.12 }}
-          transition={{ duration: reducedMotion ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
-          style={{ y: photoY }}
-          src="/hero-peat-seedling.jpg"
-          width={1376}
-          height={768}
-          alt=""
-          className="home-hero-photo"
-          loading="eager"
-          fetchPriority="high"
-        />
+      <div className={styles.tone} data-tone aria-hidden="true" />
+      <div className={styles.copy}>
+        <p className={styles.kicker} data-kicker>{en ? "FOREST FIRES AND RECOVERY, MONITORED TOGETHER" : "KARHUTLA DAN PEMULIHAN, DIPANTAU BERSAMA"}</p>
+        <h1 id="home-mission-title" className={styles.title} aria-label={en ? "Seeing forests recover, through data and human voices." : "Melihat hutan pulih, lewat data dan suara manusia."}>
+          <span className={styles.first}>
+            <span className={styles.word} data-word>{en ? "Seeing" : "Melihat"}</span>{" "}
+            <span className={styles.word} data-word>{en ? "forests recover," : "hutan pulih,"}</span>
+          </span>
+          <span className={styles.second}>
+            <span className={styles.word} data-word>{en ? "through data and" : "lewat data dan"}</span>
+            <span className={styles.word} data-word>{en ? "human voices." : "suara manusia."}</span>
+          </span>
+        </h1>
+        <div className={styles.actions}>
+          <div className={styles.actionEntry} data-intro-action>
+            <HomeActionButton language={language} className={styles.primary} onClick={onOpenRecovery} aria-label={en ? "View restoration map" : "Lihat peta pemulihan"}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5C8 2 4 3 2 3v16c4-1 7 0 10 2 3-2 6-3 10-2V3c-4-1-7 0-10 2Zm0 0v16" /></svg>
+              <span className={styles.desktopLabel}>{en ? "View restoration map" : "Lihat peta pemulihan"}</span><span className={styles.mobileLabel}>{en ? "Recovery map" : "Peta pemulihan"}</span>
+            </HomeActionButton>
+          </div>
+          <div className={styles.actionEntry} data-intro-action>
+            <HomeActionButton language={language} className={styles.secondary} onClick={onOpenReport || onOpenForum} aria-label={en ? "Send field evidence" : "Kirim bukti dari lapangan"}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m21 3-7 18-4-7-7-4 18-7Zm0 0L10 14" /></svg>
+              <span className={styles.desktopLabel}>{en ? "Send field evidence" : "Kirim bukti dari lapangan"}</span><span className={styles.mobileLabel}>{en ? "Send evidence" : "Kirim bukti"}</span>
+            </HomeActionButton>
+          </div>
+        </div>
       </div>
+      <button className={styles.scrollCue} data-cue onClick={explore}>{en ? "About BuktiPulih" : "Tentang BuktiPulih"}<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14m-5-5 5 5 5-5" /></svg></button>
     </section>
   );
 }
-// --- end of Homepage intro ---
+// --- end of Seedling hero ---

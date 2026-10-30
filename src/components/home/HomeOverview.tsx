@@ -6,17 +6,16 @@
 import { useMemo } from "react";
 import { domAnimation, LazyMotion, MotionConfig, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
-import Link from "next/link";
 import type { BnpbSyncData, ForumPost, PlotFeatureCollection } from "@/types";
 import type { DataResult } from "@/types/environment";
 import { getSortedPosts } from "@/utils/forumDisplay";
-import { initialForumPosts } from "@/data/forumPostsData";
 import { matchRegion } from "@/utils/plotDisplay";
 import { bnpbSourceDate, bnpbStatus } from "@/utils/bnpbFreshness";
 import { formatTimeWib } from "@/utils/hourlyForecast";
 import { HomeIdentityHero } from "./HomeIdentityHero";
-import { HomeActionButton, HomeStoryLabel } from "./HomeActionButton";
-import { HomeEvidenceMedia } from "./HomeEvidenceMedia";
+import { HomeActionButton } from "./HomeActionButton";
+import { HomeFieldStories } from "./HomeFieldStories";
+import { HomeContribution } from "./HomeContribution";
 import styles from "./home.module.css";
 
 interface Props {
@@ -35,12 +34,10 @@ interface Props {
   language?: "id" | "en";
 }
 
-const publishedIds = new Set(initialForumPosts.map(post => post.id));
-
 export function HomeOverview(props: Props) {
   const reducedMotion = useReducedMotion();
   const regionalPosts = useMemo(() => getSortedPosts(props.posts, props.region, "latest"), [props.posts, props.region]);
-  const fieldUpdates = regionalPosts.slice(0, 4);
+  const fieldUpdates = regionalPosts.filter(post => post.persisted).slice(0, 3);
   const dateFormat = new Intl.DateTimeFormat(props.language === "en" ? "en-GB" : "id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
   const en = props.language === "en";
   const numberFormat = new Intl.NumberFormat(en ? "en-GB" : "id-ID", { maximumFractionDigits: 2 });
@@ -271,101 +268,17 @@ export function HomeOverview(props: Props) {
         </div>
       </section>
 
-      {/* 4. Dokumentasi Dari Garis Depan: Kabar terbaru dari lapangan (sesuai Gambar 1) */}
-      <section aria-labelledby="latest-evidence-title" className={styles.evidenceSection}>
-        <div className={styles.evidenceHeader}>
-          <div>
-            <h2 id="latest-evidence-title" className={styles.evidenceTitle}>
-              {props.language === "en" ? "Latest Field Updates" : "Kabar terbaru dari lapangan"}
-            </h2>
-          </div>
-          <HomeActionButton language={props.language} className={styles.viewAllEvidence} onClick={props.onOpenForum}>
-            {props.language === "en" ? "View all field evidence →" : "Lihat semua bukti →"}
-          </HomeActionButton>
-        </div>
-
-        <div className={styles.evidenceWrap}>
-          {fieldUpdates.length === 0 && <div className={styles.emptyEvidence}>
-            <p>{props.language === "en" ? "No field stories in this region yet." : "Belum ada cerita lapangan di wilayah ini."}</p>
-            <HomeActionButton language={props.language} className={styles.viewAllEvidence} onClick={props.onOpenReport || props.onOpenForum}>{props.language === "en" ? "Share field evidence" : "Kirim bukti dari lapangan"}</HomeActionButton>
-          </div>}
-          <div className={styles.evidenceGrid}>
-            {fieldUpdates.map((item, index) => (
-              <m.article className={styles.evidenceCard} key={item.id} whileHover={reducedMotion ? undefined : { y: -3, transition: { duration: 0.2 } }} data-reveal {...reveal} transition={{ ...revealTransition, delay: index * 0.06 }}>
-                <HomeEvidenceMedia media={item.media} title={item.location_name} language={props.language} />
-                <div className={styles.evidenceBody}>
-                  <div className={styles.evidenceMetaBar}>
-                    <span className={item.field_verifications?.length ? styles.badgeVerified : styles.badgeUnverified}>
-                      {item.field_verifications?.length
-                        ? `${item.field_verifications.length} ${props.language === "en" ? "field checks" : "pemeriksaan"}`
-                        : (props.language === "en" ? "Not yet checked" : "Belum diperiksa")}
-                    </span>
-                    <span className={styles.evidenceDate}>{dateFormat.format(new Date(item.created_at))}</span>
-                  </div>
-                  <h3 className={styles.evidenceCardTitle}>{item.location_name}</h3>
-                  <p className={styles.evidenceCaption}>{item.caption}</p>
-                  <div className={styles.evidenceFoot}>
-                    {(publishedIds.has(item.id) || item.persisted) ? (
-                      <Link href={`/forum/${item.id}`} className={styles.evidenceStoryLink} aria-label={`${props.language === "en" ? "Read story" : "Lihat cerita"}: ${item.location_name}`}>
-                        <HomeStoryLabel language={props.language} />
-                      </Link>
-                    ) : (
-                      <HomeActionButton language={props.language} className={styles.evidenceStoryLink} onClick={() => props.onOpenLocalPost(item)}>
-                        {props.language === "en" ? "Read story →" : "Lihat cerita →"}
-                      </HomeActionButton>
-                    )}
-                  </div>
-                </div>
-              </m.article>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* 5. Wide Banner Ranger: Hutan pulih lewat banyak tangan (sesuai Gambar 1 di atas footer) */}
-      <m.section className={styles.rangerBanner} aria-labelledby="ranger-banner-title" data-reveal {...reveal} transition={revealTransition}>
-        <div className={styles.rangerPhotoWrap}>
-          <img
-            src="/ranger-field-patrol.jpg"
-            alt={props.language === "en" ? "Field ranger observing peatland" : "Kader pemantau memeriksa kondisi lahan gambut"}
-            className={styles.rangerPhoto}
-            loading="lazy"
-          />
-        </div>
-        <div className={styles.rangerContent}>
-          <h2 id="ranger-banner-title" className={styles.rangerTitle}>
-            {props.language === "en"
-              ? "Forests recover through many hands."
-              : "Hutan pulih lewat banyak tangan."}
-          </h2>
-          <p className={styles.rangerDesc}>
-            {props.language === "en"
-              ? "If you are on the ground or have relevant observations, share your photos, videos, or field logs. One small insight can mean so much for transparent recovery."
-              : "Jika kamu berada di lapangan atau memiliki informasi yang relevan, kirimkan foto, video, atau catatanmu. Satu informasi kecil bisa berarti besar untuk pemulihan yang lebih terbuka."}
-          </p>
-        </div>
-        <div className={styles.rangerActions}>
-          <HomeActionButton language={props.language}
-            type="button"
-            className={styles.btnRangerPrimary}
-            onClick={props.onOpenReport || props.onOpenForum}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-            <span>{props.language === "en" ? "Submit evidence now" : "Kirim bukti sekarang"}</span>
-          </HomeActionButton>
-          <HomeActionButton language={props.language}
-            type="button"
-            className={styles.btnRangerSecondary}
-            onClick={props.onOpenForum}
-          >
-            <span>{props.language === "en" ? "Learn how to contribute →" : "Pelajari cara kontribusi →"}</span>
-          </HomeActionButton>
-        </div>
-      </m.section>
+      <HomeFieldStories
+        posts={fieldUpdates}
+        language={props.language}
+        onOpenForum={props.onOpenForum}
+        onOpenLocalPost={props.onOpenLocalPost}
+        onOpenReport={props.onOpenReport}
+      />
+      <HomeContribution
+        language={props.language}
+        onOpenReport={props.onOpenReport || props.onOpenForum}
+      />
     </div>
     </MotionConfig>
     </LazyMotion>

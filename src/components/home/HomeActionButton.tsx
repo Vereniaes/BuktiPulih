@@ -1,4 +1,7 @@
-// Shared press and loading feedback for homepage actions.
+// Todo:
+// -> Share pending and press feedback for homepage actions.
+
+// --- Homepage actions ---
 "use client";
 
 import { useTransition, type ReactNode } from "react";
@@ -32,10 +35,11 @@ export function HomeActionButton({ children, onClick, className, language = "id"
   );
 }
 
-export function HomeStoryLabel({ language = "id" }: { language?: "id" | "en" }) {
+export function HomeStoryLabel({ language = "id", label }: { language?: "id" | "en"; label?: string }) {
   const { pending } = useLinkStatus();
   return <span className={styles.storyLabel} aria-live="polite" aria-busy={pending || undefined}>
     {pending && <span className={styles.spinner} aria-hidden="true" />}
-    {pending ? (language === "en" ? "Opening…" : "Membuka…") : (language === "en" ? "Read story →" : "Lihat cerita →")}
+    {pending ? (language === "en" ? "Opening…" : "Membuka…") : (label || (language === "en" ? "Read story →" : "Lihat cerita →"))}
   </span>;
 }
+// --- end of Homepage actions ---
