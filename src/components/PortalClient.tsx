@@ -335,17 +335,17 @@ export default function PortalClient() {
       />
 
       {!isMapPage && <footer className="global-footer-stage">
-        <div className="footer-backdrop-canvas" aria-hidden="true">
-          <img
-            src="/footer-panoramic-backdrop.jpg"
-            alt=""
-            className="footer-backdrop-img"
-          />
-          <div className="footer-top-blend" />
-        </div>
+        <div className="footer-scenery-stage">
+          <div className="footer-backdrop-canvas" aria-hidden="true">
+            <img
+              src="/footer-panoramic-backdrop.jpg"
+              alt=""
+              className="footer-backdrop-img"
+            />
+            <div className="footer-top-blend" />
+          </div>
 
-        <div className="footer-content-layer">
-          <div className="footer-fluid-wrapper">
+          <div className="footer-fluid-wrapper footer-hero-wrapper">
             <div className="footer-campaign-hero">
               <h2 className="footer-campaign-title">Pulihkan Lahan, Rawat Masa Depan</h2>
               <p className="footer-campaign-desc">
@@ -353,8 +353,9 @@ export default function PortalClient() {
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="footer-base-panel">
+        <div className="footer-base-panel">
             <div className="footer-fluid-wrapper">
               <div className="footer-inner">
                 <div>
@@ -481,7 +482,6 @@ export default function PortalClient() {
               </div>
             </div>
           </div>
-        </div>
       </footer>}
     </div>
   );
