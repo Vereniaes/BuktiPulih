@@ -1375,21 +1375,11 @@ button.logo-brand {
 .global-footer-stage {
   position: relative;
   width: 100%;
-  background-color: #1F493B;
+  background-color: var(--surface-bg);
   overflow: hidden;
   font-size: 13.5px;
   color: #F4F1E9;
   scroll-margin-top: 90px;
-}
-
-.footer-scenery-stage {
-  position: relative;
-  width: 100%;
-  height: clamp(220px, 26vw, 380px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
 }
 
 .footer-backdrop-canvas {
@@ -1400,8 +1390,6 @@ button.logo-brand {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.15) 15%, rgba(0, 0, 0, 0.6) 35%, black 60%);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.15) 15%, rgba(0, 0, 0, 0.6) 35%, black 60%);
 }
 
 .footer-backdrop-img {
@@ -1417,22 +1405,22 @@ button.logo-brand {
   top: 0;
   left: 0;
   right: 0;
-  height: 55%;
-  background: linear-gradient(to bottom, var(--surface-bg) 0%, rgba(246, 241, 231, 0.65) 30%, transparent 100%);
+  height: clamp(60px, 10vw, 140px);
+  background: linear-gradient(to bottom, var(--surface-bg) 0%, rgba(246, 241, 231, 0.75) 40%, transparent 100%);
   pointer-events: none;
   z-index: 2;
 }
 
-.footer-hero-wrapper {
+.footer-content-layer {
   position: relative;
   z-index: 3;
   width: 100%;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
 }
 
 .footer-campaign-hero {
-  padding: 0 0 clamp(20px, 3.5vw, 36px) 0;
+  padding: clamp(32px, 5.5vw, 64px) 0 clamp(20px, 3.5vw, 36px) 0;
   max-width: 640px;
 }
 
@@ -1458,9 +1446,12 @@ button.logo-brand {
 .footer-base-panel {
   position: relative;
   z-index: 4;
-  background-color: #1F493B;
-  padding: 44px 0 36px 0;
-  border-top: 1px solid rgba(244, 241, 233, 0.12);
+  width: 100%;
+  background: linear-gradient(180deg, rgba(31, 73, 59, 0.42) 0%, rgba(31, 73, 59, 0.94) 54px, #1F493B 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 40px 0 32px 0;
+  border-top: 1px solid rgba(244, 241, 233, 0.18);
 }
 
 .footer-fluid-wrapper {
@@ -1505,20 +1496,20 @@ button.logo-brand {
 
 /* Legacy dark-theme overrides */
 [data-theme="dark"] .global-footer-stage {
-  background-color: #10241B;
+  background-color: #040714;
 }
 
 [data-theme="dark"] .footer-top-blend {
   background: linear-gradient(to bottom, #040714 0%, rgba(4, 7, 20, 0.85) 45%, transparent 100%);
 }
 
-[data-theme="dark"] .footer-scenery-stage .footer-backdrop-img {
-  filter: brightness(0.68) contrast(1.15) saturate(0.85);
+[data-theme="dark"] .footer-backdrop-img {
+  filter: brightness(0.72) contrast(1.1) saturate(0.9);
   opacity: 0.92;
 }
 
 [data-theme="dark"] .footer-base-panel {
-  background-color: #10241B;
+  background: linear-gradient(180deg, rgba(16, 36, 27, 0.45) 0%, rgba(16, 36, 27, 0.94) 54px, #10241B 100%);
   border-top-color: rgba(244, 241, 233, 0.08);
 }
 
@@ -1527,31 +1518,28 @@ button.logo-brand {
   .global-footer-stage {
     scroll-margin-top: 120px;
   }
-  .footer-scenery-stage {
-    height: clamp(180px, 36vw, 240px);
-  }
   .footer-campaign-hero {
-    padding: 0 0 16px 0;
+    padding: clamp(24px, 5vw, 36px) 0 16px 0;
   }
   .footer-base-panel {
-    padding: 32px 0 28px 0;
+    padding: 32px 0 24px 0;
   }
 }
 
 @media (max-width: 480px) {
-  .footer-scenery-stage {
-    height: 190px;
-  }
   .footer-campaign-hero {
-    padding: 0 0 12px 0;
+    padding: 20px 0 12px 0;
   }
   .footer-campaign-title {
-    font-size: clamp(16px, 4.4vw, 20px);
+    font-size: clamp(17px, 4.8vw, 21px);
     margin-bottom: 4px;
   }
   .footer-campaign-desc {
-    font-size: clamp(11px, 2.9vw, 12.5px);
+    font-size: clamp(11px, 3vw, 13px);
     max-width: 95%;
+  }
+  .footer-base-panel {
+    padding: 26px 0 20px 0;
   }
 }
 
